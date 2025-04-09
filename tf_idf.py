@@ -1,4 +1,4 @@
-from utils import *
+from utils.utils import *
 from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
 import torch
 import argparse

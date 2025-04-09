@@ -3,10 +3,10 @@ from sklearn.feature_extraction.text import CountVectorizer
 
 
 class Vocab:
-    '''
+    """
     将学习文本转换为词袋：（id：word），并记录每个词出现的数量，出现的文章数量可以计算文章TF-IDF
     用于为实时生成指定输入数据前的数据处理
-    '''
+    """
     def __init__(
             self,
             text_data,
