@@ -5,27 +5,42 @@ from tqdm import *
 from deeplearning.ideas.textcnn.vocab import *
 
 class TextDataLoader():
-    def __init__(self, data_path: str, max_seq_len, vocab:Vocab, splitAndPad= True):
+    def __init__(
+            self,
+            data_path: str,
+            vocab:Vocab,
+            batch_size: int,
+            split:float = 0.9,
+            shuffle: bool = True):
         self.data = np.array(self.load_data(data_path))
         self.vocab = vocab
-        self.splitAndPad = splitAndPad
-
+        self.batch_size = batch_size
+        self.shuffle = shuffle
+        self.split = split
+        self.mode = "train"
+        self.train_size = int(len(self.data) * self.split)
 
     def load_data(self, path):
         return pd.read_csv(path, sep= '\t')
 
 
-    def data_iter(self, batch_size, shuffle=True):
-        if shuffle:
-            np.random.shuffle(self.data)
+    def data_iter(self):
+        data = self.data
+        if self.mode == "train":
+            data = self.data[:self.train_size]
+        if self.mode == "val":
+            data = self.data[self.train_size:]
 
-        batch_num = int(len(self.data) / float(batch_size))
+        if self.shuffle:
+            np.random.shuffle(data)
+
+        batch_num = int(len(data) / float(self.batch_size))
         for i in range(batch_num):
-            cur_batch_len = batch_size if (i+1) * batch_size < len(self.data) else len(self.data) - i * batch_size
-            cash = self.data[i * batch_size : i * batch_size + cur_batch_len]
-            yield self.data_prepocess(cash[:, 1]), cash[:, 0]
+            cur_batch_len = self.batch_size if (i+1) * self.batch_size < len(data) else len(data) - i * self.batch_size
+            cash = data[i * self.batch_size : i * self.batch_size + cur_batch_len]
+            yield self.data_preprocess(cash[:, 1]), cash[:, 0]
 
-    def data_prepocess(self, data):
+    def data_preprocess(self, data):
         # text -> id,
         res = []
         for text in data:
