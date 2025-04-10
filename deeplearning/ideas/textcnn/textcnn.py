@@ -29,7 +29,7 @@ class TextCNN(nn.Module):
         convs = [F.relu(conv(x)).squeeze(-1) for conv in self.conv_list]
 
         # max pooling [(batch_size, num_filters)]
-        convs = [F.max_pool1d(conv, kernel_size=conv.size(2)) for conv in convs]
+        convs = [F.max_pool1d(conv, kernel_size=conv.size(2)).squeeze(-1) for conv in convs]
 
         # cat
         cat = torch.cat(convs, dim=0)

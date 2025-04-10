@@ -5,7 +5,7 @@ import torch
 from textcnn import *
 from vocab import *
 from dataloader import *
-from trainer import *
+from deeplearning.ideas.textcnn.trainer import Trainer
 
 
 TRAIN_PATH = "../../../news/train_set.csv"
@@ -42,7 +42,8 @@ if __name__ == '__main__':
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
         # load data  (text_num, seq_len)
-        data = np.load(TRAIN_DATA_SAVE_PATH + 'train_split' +'.npz')
+        data = np.load(TRAIN_DATA_SAVE_PATH + 'train_split' + '.npy')
+        print("loading data for train and validation successfully, shape:{}".format(data.shape))
 
         # vocab
         text_vocab = Vocab(data_path=TRAIN_PATH)
@@ -61,7 +62,7 @@ if __name__ == '__main__':
             ngrams=model_param["ngrams"],
             num_filters=model_param["num_filters"],
             classify_num=model_param["classify_num"]
-            ).to(device)
+        ).to(device)
 
         # dataloader
         dataloader = TextDataLoader(vocab=text_vocab, batch_size=args.batch_size, split=args.split, data=data)
@@ -74,7 +75,9 @@ if __name__ == '__main__':
 
 
     if args.mode == 'test':
-
+        """
+        generate test result
+        """
         # device
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -93,5 +96,21 @@ if __name__ == '__main__':
         model.load_state_dict(checkpoint['model_state_dict'])
         # test data
         test_data = pd.read_csv(args.test_path)
+
+        # vocab
+        text_vocab = Vocab(data_path=TRAIN_PATH)
+
+        # dataloader
+        dataloader = TextDataLoader(vocab=text_vocab, batch_size=args.batch_size, split=args.split, data=test_data)
+
+        # trainer
+        text_trainer = Trainer(model, dataloader, device, model_param, MODEL_SAVE_PATH, args)
+
+        # test for res
+        text_trainer.test_for_res()
+
+
+
+
 
 

@@ -5,6 +5,7 @@ from deeplearning.ideas.textcnn.dataloader import *
 from tqdm import *
 import os
 from sklearn.metrics import f1_score
+import utils.utils as utils
 
 
 def load_loss_fn(args):
@@ -46,15 +47,16 @@ class Trainer:
         self.dataLoader.mode = "train"
         self.model.train()
         total_loss = 0
-        for (batch, label) in tqdm(self.dataLoader.data_iter(), desc=f"epoch:{epoch}"):
-            batch, label = torch.tensor(batch, dtype=torch.int32).to(self.device), torch.tensor(label, dtype=torch.int32).to(self.device)
-            out = self.model(batch)
-            self.optimizer.zero_grad()
-            loss = self.loss_fn(out, label)
-            total_loss += loss
-            loss.backward()
-            self.optimizer.step()
-            tqdm.set_postfix_str(f"Loss: {loss:.4f}")
+        with tqdm(self.dataLoader.data_iter(), total=self.dataLoader.get_len(), desc=f"epoch:{epoch}") as tq:
+            for (batch, label) in tq:
+                batch, label = torch.tensor(batch, dtype=torch.int32).to(self.device), torch.tensor(label, dtype=torch.int64).to(self.device)
+                out = self.model(batch)
+                self.optimizer.zero_grad()
+                loss = self.loss_fn(out, label)
+                total_loss += loss
+                loss.backward()
+                self.optimizer.step()
+                tq.set_postfix({"loss": f"{loss:.4f}"})
         self.total_loss_list.append(total_loss)
 
 
@@ -66,14 +68,15 @@ class Trainer:
         true_list = []
 
         # val
-        for (batch, label) in tqdm(self.dataLoader.data_iter(), desc="validate"):
-            batch, label = torch.tensor(batch, dtype=torch.int32).to(self.device), torch.tensor(label, dtype=torch.int32).to(self.device)
-            out = self.model(batch)
-            pre_list += [pre_value.item() for pre_value in torch.argmax(out, dim=-1)]
-            true_list += [true_value.item() for true_value in label]
+        with tqdm(self.dataLoader.data_iter(), total=self.dataLoader.get_len(), desc=f"epoch:{epoch}") as tq:
+            for (batch, label) in tq:
+                batch, label = torch.tensor(batch, dtype=torch.int32).to(self.device), torch.tensor(label, dtype=torch.int64).to(self.device)
+                out = self.model(batch)
+                pre_list += [pre_value.item() for pre_value in torch.argmax(out, dim=-1)]
+                true_list += [true_value.item() for true_value in label]
 
         # cal f1
-        f1 = f1_score(true_list, pre_list)
+        f1 = f1_score(true_list, pre_list, average="macro")
 
         # save model preprocess
         self.save_preprocess(f1, epoch)
@@ -87,7 +90,7 @@ class Trainer:
             torch.save({"model_state_dict": self.model.state_dict(), "model_param": self.model_param}, self.model_save_path + save_name+ ".pth")
             return
 
-        if f1_score < max(self.save_dict.keys()):
+        if f1_score < min(self.save_dict.values()):
             return
 
         save_name = f"{type(self.model).__name__}epoch{epoch}"
@@ -98,8 +101,23 @@ class Trainer:
 
         # 获取当前排在最后的模型保存名称，并在指定路径中删除
         min_f1_save_name = min(self.save_dict, key= self.save_dict.get)
-        os.remove(self.model_save_path + self.save_dict[min_f1_save_name] + ".pth")
+        os.remove(self.model_save_path + min_f1_save_name + ".pth")
         self.save_dict.pop(min_f1_save_name)
+
+    def test_for_res(self):
+        self.dataLoader.mode = "test_for_res"
+        pre_list = []
+        with tqdm(self.dataLoader.data_iter(), total=self.dataLoader.get_len()) as tq:
+            for batch in tq:
+                # test
+                batch = torch.tensor(batch, dtype=torch.int64)
+
+                out = self.model(batch)
+
+                pre_list += [pre_item.item() for pre_item in torch.argmax(out, -1)]
+
+        utils.out(pre_list, self.model_save_path + "res.csv")
+
 
     def print_fn(self):
         pass
