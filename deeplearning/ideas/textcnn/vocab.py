@@ -1,6 +1,6 @@
 # coding=utf-8
 from sklearn.feature_extraction.text import CountVectorizer
-
+import pandas as pd
 
 class Vocab:
     """
@@ -9,7 +9,7 @@ class Vocab:
     """
     def __init__(
             self,
-            text_data,
+            data_path,
             build_tfidf=False,
             min_df=1,
             max_df=1.0,
@@ -22,21 +22,21 @@ class Vocab:
         self.stop_words = stop_words
         self.ngram_range = ngram_range
         self.special_vectors = ['<UNK>', '<PAD>']
-        self.loadVocab(text_data)
+        self.loadVocab(data_path)
         self.build_tfidf = build_tfidf
         if self.build_tfidf:
             self.cal_tfidf()
 
 
     # 加载词袋
-    def loadVocab(self, text_data):
-        self.countVectorizer = CountVectorizer(input= text_data,
-                                               min_df=self.min_df,
+    def loadVocab(self, data_path):
+        data = pd.read_csv(data_path, sep="\t")
+        self.countVectorizer = CountVectorizer(min_df=self.min_df,
                                                max_df=self.max_df,
                                                token_pattern=self.token_pattern,
                                                stop_words=self.stop_words,
                                                ngram_range=self.ngram_range)
-        self.sparse_text_feature = self.countVectorizer.fit_transform(raw_documents=text_data)
+        self.sparse_text_feature = self.countVectorizer.fit_transform(raw_documents=data['text'])
         vector_len = len(self.countVectorizer.vocabulary_)
         self.special_vector2id = {'<UNK>': vector_len, '<PAD>': vector_len + 1}
 

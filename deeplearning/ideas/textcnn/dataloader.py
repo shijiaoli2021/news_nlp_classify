@@ -42,7 +42,7 @@ class TextDataLoader():
         for i in range(batch_num):
             cur_batch_len = self.batch_size if (i+1) * self.batch_size < len(data) else len(data) - i * self.batch_size
             cash = data[i * self.batch_size : i * self.batch_size + cur_batch_len]
-            yield self.data_preprocess(cash[:, 1]), cash[:, 0]
+            yield self.data_preprocess(cash[:, 1]), list(map(int, cash[:, 0]))
 
     def data_preprocess(self, data):
         # text -> id,

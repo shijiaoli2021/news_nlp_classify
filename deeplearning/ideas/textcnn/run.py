@@ -2,10 +2,11 @@
 import numpy as np
 import argparse
 import torch
-from deeplearning.ideas.textcnn.model import *
-from deeplearning.ideas.textcnn.vocab import *
-from deeplearning.ideas.textcnn.dataloader import *
-from deeplearning.ideas.textcnn.trainer import Trainer
+from model import *
+from vocab import *
+from dataloader import *
+from trainer import *
+
 
 TRAIN_PATH = "../../../news/train_set.csv"
 TEST_PATH = "../../../news/test_a.csv"
@@ -18,12 +19,14 @@ if __name__ == '__main__':
     argparse.add_argument("--mode", type=str, default="data_preprocess", choices=["data_preprocess", "train", "test"])
     argparse.add_argument("--seq_len", type=int, default=128)
     argparse.add_argument("--batch_size", type=int, default=16)
+    argparse.add_argument("--epochs", type=int, default=30)
     argparse.add_argument("--split", type=float, default=0.9)
     argparse.add_argument("--embed_dim", type=int, default=128)
     argparse.add_argument("--ngrams", nargs='+', type=int, default=[2, 3, 4])
     argparse.add_argument("--num_filters", type=int, default=16)
     argparse.add_argument("--classify_num", type=int, default=14)
     argparse.add_argument("--lr", type=float, default=1e-3)
+    argparse.add_argument("--eps", type=float, default=2e-4)
     argparse.add_argument("--loss_fn", type=str, default="cross entropy")
     argparse.add_argument("--optimizer", type=str, default="adam")
     argparse.add_argument("--save_best_num", type=int, default=3)
@@ -41,7 +44,7 @@ if __name__ == '__main__':
         data = np.load(TRAIN_DATA_SAVE_PATH + 'train_split' +'.npz')
 
         # vocab
-        text_vocab = Vocab(text_data=data)
+        text_vocab = Vocab(data_path=TRAIN_PATH)
 
         # model
         model_param = {

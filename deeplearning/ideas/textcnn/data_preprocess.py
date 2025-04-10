@@ -50,7 +50,7 @@ def preprocessing(data, startIdx, endIdx, seq_len, pad_str=None):
     res = []
     labels = []
     for i in tqdm(range(startIdx, endIdx)):
-        label, text = data['label'][i], data['text'][i]
+        label, text = int(data['label'][i]), data['text'][i]
         split_list = split_text(text, seq_len, pad_str)
         if len(split_list) == 0:
             continue
