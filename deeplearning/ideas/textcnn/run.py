@@ -2,7 +2,7 @@
 import numpy as np
 import argparse
 import torch
-from model import *
+from textcnn import *
 from vocab import *
 from dataloader import *
 from trainer import *
@@ -12,6 +12,7 @@ TRAIN_PATH = "../../../news/train_set.csv"
 TEST_PATH = "../../../news/test_a.csv"
 TRAIN_DATA_SAVE_PATH = "../../../news/"
 MODEL_SAVE_PATH = "../../checkpoints/"
+TEST_MODEL = ""
 
 
 if __name__ == '__main__':
@@ -73,5 +74,24 @@ if __name__ == '__main__':
 
 
     if args.mode == 'test':
-        pass
+
+        # device
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+        # load model
+        checkpoint = torch.load(TEST_MODEL)
+        # initial param
+        model_param = checkpoint['model_param']
+        # init model
+        model = TextCNN(
+            vocab_size=model_param["vocab_size"],
+            embed_dim=model_param["embed_dim"],
+            ngrams=model_param["ngrams"],
+            num_filters=model_param["num_filters"],
+            classify_num=model_param["classify_num"]
+            ).to(device)
+        model.load_state_dict(checkpoint['model_state_dict'])
+        # test data
+        test_data = pd.read_csv(args.test_path)
+
 

@@ -2,7 +2,7 @@
 import numpy as np
 import pandas as pd
 from tqdm import *
-from deeplearning.ideas.textcnn.vocab import *
+from vocab import *
 
 class TextDataLoader():
     def __init__(
@@ -42,11 +42,11 @@ class TextDataLoader():
         for i in range(batch_num):
             cur_batch_len = self.batch_size if (i+1) * self.batch_size < len(data) else len(data) - i * self.batch_size
             cash = data[i * self.batch_size : i * self.batch_size + cur_batch_len]
-            yield self.data_preprocess(cash[:, 1]), list(map(int, cash[:, 0]))
+            yield self.data_preprocess(cash[:, :-1]), list(map(int, cash[:, -1]))
 
     def data_preprocess(self, data):
         # text -> id,
         res = []
         for text in data:
-            res += [self.vocab.word2id(word) for word in text.split()]
+            res.append([self.vocab.word2id(word) for word in text])
         return np.array(res)

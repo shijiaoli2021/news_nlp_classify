@@ -47,7 +47,7 @@ class Trainer:
         self.model.train()
         total_loss = 0
         for (batch, label) in tqdm(self.dataLoader.data_iter(), desc=f"epoch:{epoch}"):
-            batch, label = torch.FloatTensor(batch).to(self.device), torch.FloatTensor(label).to(self.device)
+            batch, label = torch.tensor(batch, dtype=torch.int32).to(self.device), torch.tensor(label, dtype=torch.int32).to(self.device)
             out = self.model(batch)
             self.optimizer.zero_grad()
             loss = self.loss_fn(out, label)
@@ -67,7 +67,7 @@ class Trainer:
 
         # val
         for (batch, label) in tqdm(self.dataLoader.data_iter(), desc="validate"):
-            batch, label = torch.FloatTensor(batch).to(self.device), torch.FloatTensor(label).to(self.device)
+            batch, label = torch.tensor(batch, dtype=torch.int32).to(self.device), torch.tensor(label, dtype=torch.int32).to(self.device)
             out = self.model(batch)
             pre_list += [pre_value.item() for pre_value in torch.argmax(out, dim=-1)]
             true_list += [true_value.item() for true_value in label]

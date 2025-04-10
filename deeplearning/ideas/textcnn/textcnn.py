@@ -32,9 +32,9 @@ class TextCNN(nn.Module):
         convs = [F.max_pool1d(conv, kernel_size=conv.size(2)) for conv in convs]
 
         # cat
-        cat = torch.cat(convs, dim=1)
+        cat = torch.cat(convs, dim=0)
         
         # fulling connect
-        out = self.fn(cat)
+        out = self.fc(cat)
 
         return self.softmax(out)
