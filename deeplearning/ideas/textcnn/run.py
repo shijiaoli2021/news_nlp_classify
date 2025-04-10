@@ -7,9 +7,9 @@ from deeplearning.ideas.textcnn.vocab import *
 from deeplearning.ideas.textcnn.dataloader import *
 from deeplearning.ideas.textcnn.trainer import Trainer
 
-TRAIN_PATH = "../../news/train_set.csv"
-TEST_PATH = "../../news/test.csv"
-TRAIN_DATA_SAVE_PATH = "../../news/"
+TRAIN_PATH = "../../../news/train_set.csv"
+TEST_PATH = "../../../news/test_a.csv"
+TRAIN_DATA_SAVE_PATH = "../../../news/"
 MODEL_SAVE_PATH = "../../checkpoints/"
 
 
@@ -31,8 +31,8 @@ if __name__ == '__main__':
 
     args = argparse.parse_args()
     if args.mode == "data_preprocess":
-        from deeplearning.ideas.textcnn.data_preprocess import *
-        data_preprocess(TEST_PATH, args.seq_len, TRAIN_DATA_SAVE_PATH, save_keyword='train_split')
+        from data_preprocess import *
+        data_preprocess(TRAIN_PATH, args.seq_len, TRAIN_DATA_SAVE_PATH, save_keyword='train_split')
     if args.mode == "train":
         # device
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")

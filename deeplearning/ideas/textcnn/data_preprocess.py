@@ -65,7 +65,7 @@ def split_text(text: str, seq_len: int, pad_str:str = None):
         if pad_str is None:
             return []
         else:
-            return words_list + [pad_str for i in range(seq_len - len(words_list))]
+            return [words_list + [pad_str for i in range(seq_len - len(words_list))]]
     words_len = len(words_list)
     res = []
     idx = 0
