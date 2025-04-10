@@ -7,12 +7,16 @@ from deeplearning.ideas.textcnn.vocab import *
 class TextDataLoader():
     def __init__(
             self,
-            data_path: str,
             vocab:Vocab,
             batch_size: int,
             split:float = 0.9,
-            shuffle: bool = True):
-        self.data = np.array(self.load_data(data_path))
+            shuffle: bool = True,
+            data: np= None,
+            data_path:str = ""):
+        if data is None:
+            self.data = np.array(self.load_data(data_path))
+        else:
+            self.data = data
         self.vocab = vocab
         self.batch_size = batch_size
         self.shuffle = shuffle

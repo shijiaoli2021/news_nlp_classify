@@ -57,6 +57,9 @@ class Vocab:
         if word in self.countVectorizer.vocabulary_:
             return self.sparse_word_tfidf[(text_id, word)]
 
+    def get_vocab_len(self):
+        return len(self.countVectorizer.vocabulary_) + 2
+
 
 # text = ["110,2 3 4 5 6 7 8", "9 9 10, 10"]
 # y = [1, 2]

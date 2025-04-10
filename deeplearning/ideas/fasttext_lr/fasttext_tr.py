@@ -6,7 +6,6 @@ from sklearn.metrics import f1_score, classification_report
 from sklearn.model_selection import StratifiedKFold
 from sklearn.preprocessing import normalize 
 from utils import *
-import s
 
 SPLIT = 0.8
 TRAIN = True
