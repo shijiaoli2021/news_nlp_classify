@@ -7,36 +7,36 @@ from vocab import *
 from dataloader import *
 from deeplearning.ideas.textcnn.trainer import Trainer
 
-
 TRAIN_PATH = "../../../news/train_set.csv"
 TEST_PATH = "../../../news/test_a.csv"
 TRAIN_DATA_SAVE_PATH = "../../../news/"
-MODEL_SAVE_PATH = "../../checkpoints/"
-TEST_MODEL = ""
-
+MODEL_SAVE_PATH = "../../checkpoints/train3"
+TEST_MODEL = "../../checkpoints/TextCNNepoch23.pth"
 
 if __name__ == '__main__':
     argparse = argparse.ArgumentParser()
     argparse.add_argument("--mode", type=str, default="data_preprocess", choices=["data_preprocess", "train", "test"])
+    argparse.add_argument("--preprocess_mode", type=str, default="train", choices=["data_preprocess", "train", "test"])
     argparse.add_argument("--seq_len", type=int, default=128)
-    argparse.add_argument("--batch_size", type=int, default=16)
+    argparse.add_argument("--batch_size", type=int, default=32)
     argparse.add_argument("--epochs", type=int, default=30)
     argparse.add_argument("--split", type=float, default=0.9)
     argparse.add_argument("--embed_dim", type=int, default=128)
-    argparse.add_argument("--ngrams", nargs='+', type=int, default=[2, 3, 4])
-    argparse.add_argument("--num_filters", type=int, default=16)
+    argparse.add_argument("--ngrams", nargs='+', type=int, default=[2, 3, 4, 5])
+    argparse.add_argument("--num_filters", type=int, default=64)
     argparse.add_argument("--classify_num", type=int, default=14)
-    argparse.add_argument("--lr", type=float, default=1e-3)
-    argparse.add_argument("--eps", type=float, default=2e-4)
+    argparse.add_argument("--lr", type=float, default=2e-4)
+    argparse.add_argument("--eps", type=float, default=2e-5)
     argparse.add_argument("--loss_fn", type=str, default="cross entropy")
     argparse.add_argument("--optimizer", type=str, default="adam")
     argparse.add_argument("--save_best_num", type=int, default=3)
 
-
     args = argparse.parse_args()
     if args.mode == "data_preprocess":
         from data_preprocess import *
-        data_preprocess(TRAIN_PATH, args.seq_len, TRAIN_DATA_SAVE_PATH, save_keyword='train_split')
+
+        data_preprocess(TEST_PATH, args.seq_len, TRAIN_DATA_SAVE_PATH, mode=args.preprocess_mode, pad_str="<UNK>",
+                        save_keyword='test_split')
     if args.mode == "train":
         # device
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -73,7 +73,6 @@ if __name__ == '__main__':
         # train
         text_trainer.train()
 
-
     if args.mode == 'test':
         """
         generate test result
@@ -92,10 +91,11 @@ if __name__ == '__main__':
             ngrams=model_param["ngrams"],
             num_filters=model_param["num_filters"],
             classify_num=model_param["classify_num"]
-            ).to(device)
+        ).to(device)
+        print(model_param)
         model.load_state_dict(checkpoint['model_state_dict'])
         # test data
-        test_data = pd.read_csv(args.test_path)
+        test_data = np.load(TRAIN_DATA_SAVE_PATH + 'test_split' + '.npy')
 
         # vocab
         text_vocab = Vocab(data_path=TRAIN_PATH)

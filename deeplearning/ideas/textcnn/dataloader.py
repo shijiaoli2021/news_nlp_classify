@@ -42,10 +42,7 @@ class TextDataLoader:
             cur_batch_len = self.batch_size if (i + 1) * self.batch_size < len(data) else len(
                 data) - i * self.batch_size
             cash = data[i * self.batch_size: i * self.batch_size + cur_batch_len]
-            if self.mode == "test_for_res":
-                yield self.data_preprocess(cash)
-            else:
-                yield self.data_preprocess(cash[:, :-1]), list(map(int, cash[:, -1]))
+            yield self.data_preprocess(cash[:, :-1]), list(map(int, cash[:, -1]))
 
     def get_len(self):
         if self.mode == "train":
@@ -57,6 +54,12 @@ class TextDataLoader:
         if self.mode == "val":
             length = int((len(self.data) - self.train_size) / self.batch_size)
             if (len(self.data) - self.train_size) % self.batch_size != 0:
+                return length + 1
+            else:
+                return length
+        if self.mode == "test_for_res":
+            length = int(len(self.data) / self.batch_size)
+            if len(self.data) % self.batch_size != 0:
                 return length + 1
             else:
                 return length

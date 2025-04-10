@@ -22,7 +22,7 @@ class Prv_Thread(threading.Thread):
         return self.res
 
 
-def data_preprocess(path: str, seq_len: int, save_path: str, pad_str=None, save_keyword='train'):
+def data_preprocess(path: str, seq_len: int, save_path: str, mode:str = "train", pad_str=None, save_keyword='train'):
     data = pd.read_csv(path, sep='\t')
     res = []
     labels = []
@@ -32,7 +32,7 @@ def data_preprocess(path: str, seq_len: int, save_path: str, pad_str=None, save_
     for i in range(THREAD_NUM):
         startIdx = page_size * i
         endIdx = page_size * (i + 1) if i != THREAD_NUM - 1 else len(data)
-        threads.append(Prv_Thread(func=preprocessing, args=(data, startIdx, endIdx, seq_len, pad_str)))
+        threads.append(Prv_Thread(func=preprocessing, args=(data, startIdx, endIdx, seq_len, mode, pad_str)))
     # 等待任务完成
     [t.start() for t in threads]
     [t.join() for t in threads]
@@ -43,20 +43,24 @@ def data_preprocess(path: str, seq_len: int, save_path: str, pad_str=None, save_
     res, labels = np.array(res), np.array(labels).reshape(-1, 1)
     save_data = np.hstack([res, labels])
     print("data preprocessing end, data:{}, saving...".format(save_data.shape))
-    np.save(save_path + save_keyword + '.npz', save_data)
+    np.save(save_path + save_keyword, save_data)
 
 
-def preprocessing(data, startIdx, endIdx, seq_len, pad_str=None):
+def preprocessing(data, startIdx, endIdx, seq_len, mode="train", pad_str=None):
     res = []
     labels = []
     for i in tqdm(range(startIdx, endIdx)):
-        label, text = int(data['label'][i]), data['text'][i]
+        if mode == "train":
+            label, text = int(data['label'][i]), data['text'][i]
+        else:
+            label, text = i, data['text'][i]
         split_list = split_text(text, seq_len, pad_str)
         if len(split_list) == 0:
             continue
         res += split_list
         labels += [label for j in range(len(split_list))]
     return res, labels
+
 
 
 def split_text(text: str, seq_len: int, pad_str:str = None):

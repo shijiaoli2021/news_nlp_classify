@@ -1,8 +1,5 @@
 import numpy as np
 import pandas as pd
-import math
-import csv
-
 
 
 def getData(path, shuffle= False):
@@ -19,10 +16,7 @@ def text2vec(data):
     return data_X, data_Y
 
 def out(res, path="./res.csv"):
-    headers = ['label']
-    with open(path, encoding='utf-8', newline='') as f:
-        writer = csv.writer(f)
-        writer.writerow(headers)
-        writer.writerows(res)
+    df = pd.DataFrame(res, columns=['label'])
+    df.to_csv(path, index=False)
 
 
