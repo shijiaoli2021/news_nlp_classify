@@ -22,7 +22,7 @@ class Prv_Thread(threading.Thread):
         return self.res
 
 
-def data_preprocess(path: str, seq_len: int, save_path: str, save_keyword='train'):
+def data_preprocess(path: str, seq_len: int, save_path: str, pad_str=None, save_keyword='train'):
     data = pd.read_csv(path, sep='\t')
     res = []
     labels = []
@@ -32,7 +32,7 @@ def data_preprocess(path: str, seq_len: int, save_path: str, save_keyword='train
     for i in range(THREAD_NUM):
         startIdx = page_size * i
         endIdx = page_size * (i + 1) if i != THREAD_NUM - 1 else len(data)
-        threads.append(Prv_Thread(func=preprocessing, args=(data, startIdx, endIdx, seq_len)))
+        threads.append(Prv_Thread(func=preprocessing, args=(data, startIdx, endIdx, seq_len, pad_str)))
     # 等待任务完成
     [t.start() for t in threads]
     [t.join() for t in threads]
@@ -46,12 +46,12 @@ def data_preprocess(path: str, seq_len: int, save_path: str, save_keyword='train
     np.save(save_path + save_keyword + '.npz', save_data)
 
 
-def preprocessing(data, startIdx, endIdx, seq_len):
+def preprocessing(data, startIdx, endIdx, seq_len, pad_str=None):
     res = []
     labels = []
     for i in tqdm(range(startIdx, endIdx)):
         label, text = data['label'][i], data['text'][i]
-        split_list = split_text(text, seq_len)
+        split_list = split_text(text, seq_len, pad_str)
         if len(split_list) == 0:
             continue
         res += split_list
@@ -59,10 +59,13 @@ def preprocessing(data, startIdx, endIdx, seq_len):
     return res, labels
 
 
-def split_text(text: str, seq_len: int):
+def split_text(text: str, seq_len: int, pad_str:str = None):
     words_list = text.split()
     if len(words_list) < seq_len:
-        return []
+        if pad_str is None:
+            return []
+        else:
+            return words_list + [pad_str for i in range(seq_len - len(words_list))]
     words_len = len(words_list)
     res = []
     idx = 0
