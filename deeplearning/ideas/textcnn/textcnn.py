@@ -37,4 +37,4 @@ class TextCNN(nn.Module):
         # fulling connect
         out = self.fc(cat)
 
-        return self.softmax(out)
+        return out
