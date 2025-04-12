@@ -1,11 +1,8 @@
 #coding=utf-8
-import numpy as np
 import argparse
-import torch
 from textcnn import *
-from vocab import *
-from dataloader import *
-from deeplearning.ideas.textcnn.trainer import Trainer
+from deeplearning.dataloader.dataloader import *
+from deeplearning.trainer.trainer import Trainer
 
 TRAIN_PATH = "../../../news/train_set.csv"
 TEST_PATH = "../../../news/test_a.csv"
@@ -33,8 +30,6 @@ if __name__ == '__main__':
 
     args = argparse.parse_args()
     if args.mode == "data_preprocess":
-        from data_preprocess import *
-
         data_preprocess(TEST_PATH, args.seq_len, TRAIN_DATA_SAVE_PATH, mode=args.preprocess_mode, pad_str="<UNK>",
                         save_keyword='test_split')
     if args.mode == "train":

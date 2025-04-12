@@ -1,7 +1,7 @@
 #coding=utf-8
 
 import torch
-from deeplearning.ideas.textcnn.dataloader import *
+from deeplearning.dataloader.dataloader import *
 from tqdm import *
 import os
 from sklearn.metrics import f1_score
