@@ -6,9 +6,10 @@ MODEL_SAVE_PATH = "./checkpoints/checkpoint1/"
 
 
 class BertTrainer:
-    def __init__(self, model, model_param, train_loader, valid_loader, test_loader, loss_fn, optimizer, args):
+    def __init__(self, model, model_param, device, train_loader, valid_loader, test_loader, loss_fn, optimizer, args):
         self.model = model
         self.model_param = model_param
+        self.device = device
         self.trainLoader = train_loader
         self.validLoader = valid_loader
         self.testLoader = test_loader
@@ -26,7 +27,7 @@ class BertTrainer:
             self._train_one_epoch(epoch)
 
             # valid
-            if epoch % self.args.valid_steps == 0:
+            if epoch % self.args.valid_interval == 0:
                 self.valid()
 
         # test:
@@ -48,7 +49,7 @@ class BertTrainer:
 
             for batch in tq:
                 # data mask_pos(batch_size, max_pre) mask_token(batch_size, max_pre) input_data(batch_size, seq_len)
-                mask_pos, mask_token, input_data = [data.to(self.args.device) for data in batch]
+                mask_pos, mask_token, input_data = [data.to(self.device) for data in batch]
 
                 # model  pool_out(batch_size, hidden_size), mlm(batch_size, max_pre, vocab_size)
                 pool_out, mlm = self.model(input_data, mask_pos)
@@ -72,7 +73,7 @@ class BertTrainer:
         with tqdm(self.testLoader, desc="valid") as tq:
             for batch in tq:
                 # data mask_pos(batch_size, max_pre) mask_token(batch_size, max_pre) input_data(batch_size, seq_len)
-                mask_pos, mask_token, input_data = [data.to(self.args.device) for data in batch]
+                mask_pos, mask_token, input_data = [data.to(self.device) for data in batch]
 
                 # model  pool_out(batch_size, hidden_size), mlm(batch_size, max_pre, vocab_size)
                 pool_out, mlm = self.model(input_data, mask_pos)
@@ -94,7 +95,7 @@ class BertTrainer:
             for (idx, batch) in enumerate(tq):
 
                 # data mask_pos(batch_size, max_pre) mask_token(batch_size, max_pre) input_data(batch_size, seq_len)
-                mask_pos, mask_token, input_data = [data.to(self.args.device) for data in batch]
+                mask_pos, mask_token, input_data = [data.to(self.device) for data in batch]
 
                 # model  pool_out(batch_size, hidden_size), mlm(batch_size, max_pre, vocab_size)
                 pool_out, mlm = self.model(input_data, mask_pos)
@@ -118,14 +119,19 @@ class BertTrainer:
 
                 # update and check train steps
                 self.steps += 1
-                if self.steps % self.args.save_steps_interval == 0:
-                    self.save_model(self.model)
+
+                # save model
+                self.save_model(self.model)
 
         self.loss_list.append(total_loss)
 
     def save_model(self, train_steps):
-        # 保存较好的模型训练参数和初始化参数
-        torch.save({"model_state_dict": self.model.state_dict(), "model_param": self.model_param},
-                   MODEL_SAVE_PATH + type(self.model).__name__ + str(train_steps) +".pth")
+        if self.steps % self.args.save_steps_interval == 0:
+            print(f"the perfect bert has trained for {self.steps} steps, saving...")
+            # 保存较好的模型训练参数和初始化参数
+            torch.save({"model_state_dict": self.model.state_dict(), "model_param": self.model_param},
+                       MODEL_SAVE_PATH + type(self.model).__name__ + str(train_steps) +".pth")
+            print("saving successfully...")
+
 
 

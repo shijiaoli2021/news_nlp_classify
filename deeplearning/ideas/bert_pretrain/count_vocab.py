@@ -1,7 +1,8 @@
 import pandas as pd
+from tqdm import *
 
 class Vocab:
-    def __init__(self, data_path="", mask_word="[MASK]", pad_word="[PAD]", cls_word = "[CLS]"):
+    def __init__(self, data_path=None, mask_word="[MASK]", pad_word="[PAD]", cls_word = "[CLS]"):
 
         # 初始化词袋字典
         self.vocab_dict = {pad_word:0, cls_word:1, mask_word:2}
@@ -22,7 +23,8 @@ class Vocab:
         :param data_path: ""
         """
         data = pd.read_csv(data_path, sep="\t")["text"]
-        for text in data:
+        print(f"loading {len(data)} text data to vocab...")
+        for text in tqdm(data):
             self.load_text2vocab(text)
 
     def load_text2vocab(self, text):

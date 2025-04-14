@@ -35,7 +35,7 @@ class Trainer:
                 loss.backward()
                 self.optim.step()
 
-            print("train {} enpoch over,, total_loss{}".format(epoch, total_loss))
+            print("train {} epoch over,, total_loss{}".format(epoch, total_loss))
 
             if epoch % self.args.gap != 0:
                 continue

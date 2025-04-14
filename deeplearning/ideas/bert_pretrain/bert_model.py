@@ -3,7 +3,6 @@ import torch.nn as nn
 import torch.nn.functional as F
 from jinja2.filters import sync_do_select
 from torch.fx.experimental.migrate_gradual_types.z3_types import dyn_type
-import bert_config
 
 
 
@@ -149,26 +148,26 @@ class Encoder(nn.Module):
 
 
 class Bert(nn.Module):
-    def __init__(self, device):
+    def __init__(self, max_vocab, max_len, num_layers, embed_dim, num_heads, d_ff, p_dropout, device):
         super(Bert, self).__init__()
         self.embedding = Embedding(
-            vocab_size= bert_config.max_vocab,
-            embed_dim=bert_config.embed_dim,
-            max_len=bert_config.max_len,
-            device=device)
+            vocab_size= max_vocab,
+            embed_dim= embed_dim,
+            max_len= max_len,
+            device= device)
         self.enc_layers = nn.ModuleList([Encoder(
-            bert_config.embed_dim,
-            bert_config.num_heads,
-            bert_config.d_ff,
-            bert_config.p_dropout
-        ) for i in range(bert_config.num_layers)])
+            embed_dim,
+            num_heads,
+            d_ff,
+            p_dropout
+        ) for i in range(num_layers)])
 
         # weight share between classifier and word embedding module
         self.word_emb_shared_weight = self.embedding.word_emb.weight
-        self.word_classifier = nn.Linear(bert_config.embed_dim, bert_config.max_vocab)
+        self.word_classifier = nn.Linear(embed_dim, max_vocab)
         self.word_classifier.weight = self.word_emb_shared_weight
         self.gelu = nn.GELU()
-        self.fc = nn.Linear(bert_config.embed_dim, bert_config.embed_dim)
+        self.fc = nn.Linear(embed_dim, embed_dim)
 
 
     def forward(self, x, masked_pos):
@@ -190,7 +189,7 @@ class Bert(nn.Module):
             output = encoder(output, pad_mask)
 
         # pos_pre （batch_size, max_pre）-> (batch_size, max_pre, embed_dim)
-        masked_pos = masked_pos.unsqueeze(-1).expand(-1, -1, bert_config.embed_dim)
+        masked_pos = masked_pos.unsqueeze(-1).expand(-1, -1, embed_dim)
         h_masked = torch.gather(output, dim=1, index=masked_pos)
         h_masked = self.gelu(self.fc(h_masked))
         mlm = self.word_classifier(h_masked)

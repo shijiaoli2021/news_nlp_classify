@@ -1,5 +1,5 @@
 # 最大序列长度
-max_len = 512
+max_len = 3000
 
 # 字典最大大小
 max_vocab = 7000
