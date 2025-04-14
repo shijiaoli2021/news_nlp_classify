@@ -1,7 +1,7 @@
 import numpy as np
 import torch
 from torch.utils.data.dataloader import Dataset
-from deeplearning.ideas.bert_pretrain.count_vocab import Vocab
+from count_vocab import Vocab
 import bert_config
 import random
 from tqdm import *

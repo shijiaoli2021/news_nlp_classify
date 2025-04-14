@@ -2,7 +2,7 @@ import torch
 from tqdm import *
 
 
-MODEL_SAVE_PATH = "./checkpoints/checkpoint1/"
+MODEL_SAVE_PATH = "checkpoints/checkpoint1/"
 
 
 class BertTrainer:

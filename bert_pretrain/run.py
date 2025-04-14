@@ -6,7 +6,7 @@ import pandas as pd
 from dataset import BertDataset
 from count_vocab import Vocab
 from torch.utils.data.dataloader import DataLoader
-from deeplearning.ideas.bert_pretrain.trainer import BertTrainer
+from trainer import BertTrainer
 
 DATA_PATH1 = ""
 DATA_PATH2 = ""

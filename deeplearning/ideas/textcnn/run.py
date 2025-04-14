@@ -3,6 +3,7 @@ import argparse
 from textcnn import *
 from deeplearning.dataloader.dataloader import *
 from deeplearning.trainer.trainer import Trainer
+from vocab.vocab import *
 
 TRAIN_PATH = "../../../news/train_set.csv"
 TEST_PATH = "../../../news/test_a.csv"
