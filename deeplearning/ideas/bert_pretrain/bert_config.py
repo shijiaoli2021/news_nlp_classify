@@ -1,5 +1,5 @@
 # 最大序列长度
-max_len = 128
+max_len = 512
 
 # 字典最大大小
 max_vocab = 7000
@@ -8,7 +8,7 @@ max_vocab = 7000
 max_pre = 10
 
 # k和q的维度
-d_k=d_v=64
+embed_dim = 64
 d_model = 768
 d_ff = d_model * 4
 

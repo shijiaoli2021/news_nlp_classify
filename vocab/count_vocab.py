@@ -1,15 +1,16 @@
 import pandas as pd
 
 class Vocab:
-    def __init__(self, data_path="", mask_word="[MASK]", pad_word="[PAD]"):
+    def __init__(self, data_path="", mask_word="[MASK]", pad_word="[PAD]", cls_word = "[CLS]"):
 
         # 初始化词袋字典
-        self.vocab_dict = {pad_word:0, mask_word:1}
-        self.vocab_invalid_len = 2
+        self.vocab_dict = {pad_word:0, cls_word:1, mask_word:2}
+        self.vocab_invalid_len = 3
         self.not_mask_idx_list = []
-        self.vocab_len = 2
+        self.vocab_len = 3
         self.mask_word = mask_word
         self.pad_word = pad_word
+        self.cls_word = cls_word
         if data_path is not None:
             self.load_data2vocab(data_path)
 
@@ -46,6 +47,9 @@ class Vocab:
 
     def get_pad_word(self):
         return self.pad_word
+
+    def get_cls_word(self):
+        return self.cls_word
 
     def get_len(self):
         return self.vocab_len
