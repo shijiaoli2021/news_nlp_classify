@@ -7,7 +7,7 @@ class Vocab:
         # 初始化词袋字典
         self.vocab_dict = {pad_word:0, cls_word:1, mask_word:2}
         self.vocab_invalid_len = 3
-        self.not_mask_idx_list = []
+        self.not_mask_idx_list = ["[CLS]"]
         self.vocab_len = 3
         self.mask_word = mask_word
         self.pad_word = pad_word

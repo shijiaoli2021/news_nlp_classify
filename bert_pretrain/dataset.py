@@ -18,7 +18,7 @@ def padding(max_len:int, data, padding_idx=0):
     if len(data) == max_len:
         return data
     # 填充
-    return data.extend([padding_idx for i in range(max_len - len(data))])
+    return data + [padding_idx for i in range(max_len - len(data))]
 
 def seg_text(max_len, data, random_seg=False):
     """
@@ -60,6 +60,7 @@ class BertDataset(Dataset):
 
                 # word2idx
                 input_idx_list = [self.vocab.word2idx(word) for word in word_list]
+
                 input_idx_list = [self.vocab.word2idx(self.vocab.get_cls_word())] + input_idx_list
 
                 #seg_text
@@ -97,7 +98,7 @@ class BertDataset(Dataset):
         :return:
         """
         # pos idx
-        candidate_pos_idx = [i for (i, idx) in enumerate(input_idx_list) if input_idx_list[idx] not in self.vocab.not_mask_idx_list]
+        candidate_pos_idx = [i for (i, idx) in enumerate(input_idx_list) if idx not in self.vocab.not_mask_idx_list]
 
         # shuffle for mask
         random.shuffle(candidate_pos_idx)

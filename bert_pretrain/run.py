@@ -40,6 +40,8 @@ if __name__ == '__main__':
     parser.add_argument("--save_steps_interval", type=int, default=10000)
     parser.add_argument("--lr", type=float, default=1e-3)
     parser.add_argument("--eps", type=float, default=1e-5)
+    parser.add_argument("--train_split", type=float, default=0.8)
+    parser.add_argument("--val_split", type=float, default=0.8)
 
     # random seed
     torch.cuda.manual_seed(SEED)
@@ -69,6 +71,8 @@ if __name__ == '__main__':
     vocab = Vocab()
     vocab.load_data2vocab(DATA_PATH1)
     vocab.load_data2vocab(DATA_PATH2)
+    print(f"loading word to vocab successfully, total {vocab.get_len()} word")
+
 
     #dataloader
     trainLoader, valLoader, testLoader = build_loader(vocab, args)

@@ -9,11 +9,11 @@ max_pre = 10
 
 # k和q的维度
 embed_dim = 64
-d_model = 768
+d_model = 256
 d_ff = d_model * 4
 
 num_heads = 12
-num_layers = 6
+num_layers = 4
 
 num_seg = 2
 
