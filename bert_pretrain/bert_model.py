@@ -189,7 +189,7 @@ class Bert(nn.Module):
             output = encoder(output, pad_mask)
 
         # pos_pre （batch_size, max_pre）-> (batch_size, max_pre, embed_dim)
-        masked_pos = masked_pos.unsqueeze(-1).expand(-1, -1, embed_dim)
+        masked_pos = masked_pos.unsqueeze(-1).expand(-1, -1, output.shape[-1])
         h_masked = torch.gather(output, dim=1, index=masked_pos)
         h_masked = self.gelu(self.fc(h_masked))
         mlm = self.word_classifier(h_masked)

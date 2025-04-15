@@ -8,6 +8,7 @@ from count_vocab import Vocab
 from torch.utils.data.dataloader import DataLoader
 from trainer import BertTrainer
 
+SEED = 42
 DATA_PATH1 = ""
 DATA_PATH2 = ""
 
@@ -39,6 +40,9 @@ if __name__ == '__main__':
     parser.add_argument("--save_steps_interval", type=int, default=10000)
     parser.add_argument("--lr", type=float, default=1e-3)
     parser.add_argument("--eps", type=float, default=1e-5)
+
+    # random seed
+    torch.cuda.manual_seed(SEED)
 
     # build args
     args = parser.parse_args()
