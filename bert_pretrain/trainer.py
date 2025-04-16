@@ -1,8 +1,9 @@
 import torch
 from tqdm import *
+import os
 
 
-MODEL_SAVE_PATH = "checkpoints/checkpoint1/"
+MODEL_SAVE_PATH = "./checkpoints/checkpoint1"
 
 
 class BertTrainer:
@@ -122,16 +123,18 @@ class BertTrainer:
                 self.steps += 1
 
                 # save model
-                self.save_model(self.model)
+                self.save_model()
 
         self.loss_list.append(total_loss)
 
-    def save_model(self, train_steps):
+    def save_model(self):
         if self.steps % self.args.save_steps_interval == 0:
             print(f"the perfect bert has trained for {self.steps} steps, saving...")
+
             # 保存较好的模型训练参数和初始化参数
-            torch.save({"model_state_dict": self.model.state_dict(), "model_param": self.model_param},
-                       MODEL_SAVE_PATH + type(self.model).__name__ + str(train_steps) +".pth")
+            model_name = "mini_bert_" + str(self.steps) +".pth"
+            save_path = os.path.join(MODEL_SAVE_PATH, model_name)
+            torch.save({"model_state_dict": self.model.state_dict(), "model_param": self.model_param}, save_path)
             print("saving successfully...")
 
 
