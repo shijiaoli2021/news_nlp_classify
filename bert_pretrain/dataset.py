@@ -5,7 +5,23 @@ from count_vocab import Vocab
 import bert_config
 import random
 from tqdm import *
+from threading import Thread
 
+
+THREAD_NUM = 5
+
+class DataThread(Thread):
+    def __init__(self, fn, fn_args):
+        super(DataThread, self).__init__()
+        self.fn = fn
+        self.fn_args = fn_args
+        self.res = None
+
+    def run(self):
+        self.res = self.fn(*self.fn_args)
+
+    def get_res(self):
+        return self.res
 
 def padding(max_len:int, data, padding_idx=0):
     """
@@ -51,9 +67,41 @@ class BertDataset(Dataset):
         self.mask_pos_list = []
         self.mask_token_list = []
         print("start preprocess text data...")
-        with tqdm(self.data) as tq:
-            for text in tq:
-                #todo 1) seg text by max_len. 2) mask text. 3)padding text.
+
+        # build thread
+        per_size = int(len(self.data) / THREAD_NUM) if len(self.data) % THREAD_NUM == 0 else int(len(self.data) / THREAD_NUM) + 1
+        thread_list = []
+        for i in range(THREAD_NUM):
+            start_idx = i * per_size
+            end_idx = min((i+1) * per_size, len(self.data))
+            thread_list.append(DataThread(fn=self.preprocess_range_data, fn_args=(start_idx, end_idx)))
+
+        # run
+        [thread.start() for thread in thread_list]
+
+        # wait
+        [thread.join() for thread in thread_list]
+
+        # acquire data
+        for thread in thread_list:
+            input_data_cash, mask_pos_cash, mask_token_cash = thread.get_res()
+            # save
+            self.input_data += input_data_cash
+            self.mask_pos_list += mask_pos_cash
+            self.mask_token_list += mask_token_cash
+        # transfer to tensor
+        self.list2tensor()
+        print("preprocess text data over...")
+
+    def preprocess_range_data(self, start_idx, end_idx):
+        input_data = []
+        mask_pos_list = []
+        mask_token_list = []
+        with tqdm(range(start_idx, end_idx)) as tq:
+            for idx in tq:
+                # todo 1) seg text by max_len. 2) mask text. 3)padding text.
+                # acquire data
+                text = self.data[idx]
 
                 # split
                 word_list = text.split()
@@ -63,23 +111,24 @@ class BertDataset(Dataset):
 
                 input_idx_list = [self.vocab.word2idx(self.vocab.get_cls_word())] + input_idx_list
 
-                #seg_text
+                # seg_text
                 input_idx_list = seg_text(bert_config.max_len, input_idx_list)
 
                 # mask
                 mask_pos, mask_token, input_idx_list = self.mask_one_text(input_idx_list)
 
                 # padding
-                input_idx_list = padding(bert_config.max_len, input_idx_list, self.vocab.word2idx(self.vocab.get_pad_word()))
+                input_idx_list = padding(bert_config.max_len, input_idx_list,
+                                         self.vocab.word2idx(self.vocab.get_pad_word()))
                 mask_pos = padding(bert_config.max_pre, mask_pos)
                 mask_token = padding(bert_config.max_pre, mask_token)
 
                 # save
-                self.input_data.append(input_idx_list)
-                self.mask_pos_list.append(mask_pos)
-                self.mask_token_list.append(mask_token)
-        # transfer to tensor
-        self.list2tensor()
+                input_data.append(input_idx_list)
+                mask_pos_list.append(mask_pos)
+                mask_token_list.append(mask_token)
+        return input_data, mask_pos_list, mask_token_list
+
 
     def list2tensor(self):
         """
@@ -135,3 +184,4 @@ class BertDataset(Dataset):
 
     def __len__(self):
         return len(self.data)
+

@@ -8,7 +8,7 @@ import threading
 THREAD_NUM = 5
 
 
-class Prv_Thread(threading.Thread):
+class PrvThread(threading.Thread):
     def __init__(self, func, args):
         super().__init__()
         self.func = func
@@ -32,7 +32,7 @@ def data_preprocess(path: str, seq_len: int, save_path: str, mode:str = "train",
     for i in range(THREAD_NUM):
         startIdx = page_size * i
         endIdx = page_size * (i + 1) if i != THREAD_NUM - 1 else len(data)
-        threads.append(Prv_Thread(func=preprocessing, args=(data, startIdx, endIdx, seq_len, mode, pad_str)))
+        threads.append(PrvThread(func=preprocessing, args=(data, startIdx, endIdx, seq_len, mode, pad_str)))
     # 等待任务完成
     [t.start() for t in threads]
     [t.join() for t in threads]
