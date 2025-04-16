@@ -1,5 +1,7 @@
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
+
 
 def get_pad_mask(x: torch.Tensor, padding_idx=0):
     """
@@ -9,10 +11,12 @@ def get_pad_mask(x: torch.Tensor, padding_idx=0):
     """
     return x.eq(0).unsqueeze(-1).expand(-1, -1, x.shape[1])
 
+
 class Embedding(nn.Module):
     """
     we only want to learn the semantic of news text, so only use word embedding and pos embedding
     """
+
     def __init__(self, vocab_size, embed_dim, max_len, device):
         super(Embedding, self).__init__()
         self.word_emb = nn.Embedding(vocab_size, embed_dim)
@@ -35,6 +39,7 @@ class Embedding(nn.Module):
 
         return self.norm(word_emb + pos_emb)
 
+
 class Feedforward(nn.Module):
     def __init__(self, embed_dim, dff, dropout=0.1):
         super(Feedforward, self).__init__()
@@ -51,8 +56,6 @@ class Feedforward(nn.Module):
         return x
 
 
-
-
 def attention(q, k, v, d, attn_mask=None):
     """
 
@@ -64,15 +67,18 @@ def attention(q, k, v, d, attn_mask=None):
     :return:
     """
     # (batch_size, head_num. seq_len, d_model) -> (batch_size, head_num, seq_len, seq_len)
-    A = torch.matmul(q, k.transpose(-2, -1))/torch.sqrt(torch.tensor(d))
+    A = torch.matmul(q, k.transpose(-2, -1)) / torch.sqrt(torch.tensor(d))
     if attn_mask is not None:
         A = A.masked_fill(attn_mask, 1e-9)
     A = nn.Softmax(dim=-1)(A)
     return torch.matmul(A, v)
 
+
 '''layer_norm'''
+
+
 class LayerNorm(nn.Module):
-    def __init__(self, d_model, eps= 1e-6):
+    def __init__(self, d_model, eps=1e-6):
         super(LayerNorm, self).__init__()
         self.eps = eps
         self.alpha = nn.Parameter(torch.ones(d_model))
@@ -83,8 +89,9 @@ class LayerNorm(nn.Module):
                  / (x.std(dim=-1, keepdim=True) + self.eps) + self.bias
         return output
 
+
 class MultiHeadAttention(nn.Module):
-    def __init__(self, embed_dim, head_num = 4, dropout = 0.1):
+    def __init__(self, embed_dim, head_num=4, dropout=0.1):
         super(MultiHeadAttention, self).__init__()
         assert embed_dim % head_num == 0
         self.multi_head_dim = embed_dim // head_num
@@ -94,25 +101,27 @@ class MultiHeadAttention(nn.Module):
         self.dropout = nn.Dropout(dropout)
         self.fc = nn.Linear(embed_dim, embed_dim)
 
-    def forward(self, x, attn_mask:torch.Tensor):
+    def forward(self, x, attn_mask: torch.Tensor):
         """
         :param x: (batch_size, seq_len, embed_dim)
         :param attn_mask: (batch_size, seq_len, seq_len)
         :return: multi_head_attention
         """
-        batch_size,  embed_dim = x.shape
+        batch_size, seq_len, embed_dim = x.shape
         W = self.w(x)
 
-        q, k, v = W[:, : self.embed_dim], W[:, self.embed_dim : 2*self.embed_dim], W[:, 2*self.embed_dim:]
-        q = q.view(batch_size, self.head_num, self.multi_head_dim).transpose(1, 2)
-        k = k.view(batch_size, self.head_num, self.multi_head_dim).transpose(1, 2)
-        v = v.view(batch_size, self.head_num, self.multi_head_dim).transpose(1, 2)
+        q, k, v = W[:, :, : self.embed_dim], W[:, :, self.embed_dim: 2 * self.embed_dim], W[:, :, 2 * self.embed_dim:]
+        q = q.view(batch_size, -1, self.head_num, self.multi_head_dim).transpose(1, 2)
+        k = k.view(batch_size, -1, self.head_num, self.multi_head_dim).transpose(1, 2)
+        v = v.view(batch_size, -1, self.head_num, self.multi_head_dim).transpose(1, 2)
 
         # mask
-        mask = attn_mask.squeeze(1).repeat(1, self.head_num, 1, 1)
-        att = self.dropout(attention(q, k, v, self.multi_head_dim, attn_mask=mask)).view(batch_size, -1)
+        mask = attn_mask.unsqueeze(1).repeat(1, self.head_num, 1, 1)
+        att = self.dropout(attention(q, k, v, self.multi_head_dim, attn_mask=mask)).transpose(1, 2).contiguous().view(
+            batch_size, seq_len, -1)
         # feedforward
         return self.fc(att)
+
 
 class Encoder(nn.Module):
     def __init__(self, embed_dim, head_num, dff=512, dropout=0.1):
@@ -123,7 +132,6 @@ class Encoder(nn.Module):
         self.ffn = Feedforward(embed_dim, dff, dropout)
 
     def forward(self, x, pad_mask):
-
         residual = x
 
         # norm1 research express the norm before multi-head attention optimizer
@@ -141,15 +149,14 @@ class Encoder(nn.Module):
         return x + residual
 
 
-
 class Bert(nn.Module):
     def __init__(self, max_vocab, max_len, num_layers, embed_dim, num_heads, d_ff, p_dropout, device):
         super(Bert, self).__init__()
         self.embedding = Embedding(
-            vocab_size= max_vocab,
-            embed_dim= embed_dim,
-            max_len= max_len,
-            device= device)
+            vocab_size=max_vocab,
+            embed_dim=embed_dim,
+            max_len=max_len,
+            device=device)
         self.enc_layers = nn.ModuleList([Encoder(
             embed_dim,
             num_heads,
@@ -164,9 +171,7 @@ class Bert(nn.Module):
         self.gelu = nn.GELU()
         self.fc = nn.Linear(embed_dim, embed_dim)
 
-
     def forward(self, x, masked_pos):
-
         """
 
         :param x: (batch_size, seq_len)
@@ -188,7 +193,6 @@ class Bert(nn.Module):
         h_masked = torch.gather(output, dim=1, index=masked_pos)
         h_masked = self.gelu(self.fc(h_masked))
         mlm = self.word_classifier(h_masked)
-
         return output[:, 0, :], mlm
 
 

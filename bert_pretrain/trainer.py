@@ -18,6 +18,7 @@ class BertTrainer:
         self.args = args
         self.steps = 0
         self.loss_list = []
+        self.max_vocab = model_param["max_vocab"]
 
 
     def train(self):
@@ -49,12 +50,12 @@ class BertTrainer:
 
             for batch in tq:
                 # data mask_pos(batch_size, max_pre) mask_token(batch_size, max_pre) input_data(batch_size, seq_len)
-                mask_pos, mask_token, input_data = [data.to(self.device) for data in batch]
+                input_data, mask_pos, mask_token = [data.to(self.device) for data in batch]
 
                 # model  pool_out(batch_size, hidden_size), mlm(batch_size, max_pre, vocab_size)
                 pool_out, mlm = self.model(input_data, mask_pos)
 
-                valid_loss = self.loss_fn(mlm.view(-1, mlm.shape[-1]), mask_token.view(-1))
+                valid_loss = self.loss_fn(mlm.view(-1, self.max_vocab), mask_token.view(-1))
 
                 valid_loss_list.append(valid_loss)
 
@@ -73,12 +74,12 @@ class BertTrainer:
         with tqdm(self.testLoader, desc="valid") as tq:
             for batch in tq:
                 # data mask_pos(batch_size, max_pre) mask_token(batch_size, max_pre) input_data(batch_size, seq_len)
-                mask_pos, mask_token, input_data = [data.to(self.device) for data in batch]
+                input_data, mask_pos, mask_token = [data.to(self.device) for data in batch]
 
                 # model  pool_out(batch_size, hidden_size), mlm(batch_size, max_pre, vocab_size)
                 pool_out, mlm = self.model(input_data, mask_pos)
 
-                test_loss = self.loss_fn(mlm.view(-1, mlm.shape[-1]), mask_token.view(-1))
+                test_loss = self.loss_fn(mlm.view(-1, self.max_vocab), mask_token.view(-1))
 
                 test_loss_list.append(test_loss)
 
@@ -95,13 +96,13 @@ class BertTrainer:
             for (idx, batch) in enumerate(tq):
 
                 # data mask_pos(batch_size, max_pre) mask_token(batch_size, max_pre) input_data(batch_size, seq_len)
-                mask_pos, mask_token, input_data = [data.to(self.device) for data in batch]
+                input_data, mask_pos, mask_token = [data.to(self.device) for data in batch]
 
                 # model  pool_out(batch_size, hidden_size), mlm(batch_size, max_pre, vocab_size)
                 pool_out, mlm = self.model(input_data, mask_pos)
 
                 # loss
-                mlm_loss = self.loss_fn(mlm.view(-1, mlm.shape[-1]), mask_token.view(-1))
+                mlm_loss = self.loss_fn(mlm.view(-1, self.max_vocab), mask_token.view(-1))
 
                 total_loss += mlm_loss
 

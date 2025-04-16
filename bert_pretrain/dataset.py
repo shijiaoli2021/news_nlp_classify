@@ -72,12 +72,12 @@ class BertDataset(Dataset):
                 # padding
                 input_idx_list = padding(bert_config.max_len, input_idx_list, self.vocab.word2idx(self.vocab.get_pad_word()))
                 mask_pos = padding(bert_config.max_pre, mask_pos)
-                mask_token = padding(bert_config.max_len, mask_token)
+                mask_token = padding(bert_config.max_pre, mask_token)
 
                 # save
-                self.input_data += input_idx_list
-                self.mask_pos_list += mask_pos
-                self.mask_token_list += mask_token
+                self.input_data.append(input_idx_list)
+                self.mask_pos_list.append(mask_pos)
+                self.mask_token_list.append(mask_token)
         # transfer to tensor
         self.list2tensor()
 
@@ -87,7 +87,7 @@ class BertDataset(Dataset):
         """
         self.input_data = torch.LongTensor(self.input_data)
         self.mask_token_list = torch.LongTensor(self.mask_token_list)
-        self.mask_pos_list = torch.LongTensor()
+        self.mask_pos_list = torch.LongTensor(self.mask_pos_list)
 
 
     """mask a text"""
@@ -123,7 +123,7 @@ class BertDataset(Dataset):
             mask_words_idx.append(input_idx_list[idx])
             random_seed = np.random.random_sample()
             if random_seed < bert_config.p_mask:
-                input_idx_list[idx] = self.vocab.get_mask_word()
+                input_idx_list[idx] = self.vocab.word2idx(self.vocab.get_mask_word())
             elif random_seed < bert_config.p_replace:
                 input_idx_list[idx] = np.random.randint(low=self.vocab.vocab_invalid_len, high=self.vocab.get_len())
         return mask_idx_from_text, mask_words_idx, input_idx_list
