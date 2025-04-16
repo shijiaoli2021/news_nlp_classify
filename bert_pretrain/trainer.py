@@ -17,7 +17,7 @@ class BertTrainer:
         self.loss_fn = loss_fn
         self.optimizer = optimizer
         self.args = args
-        self.steps = 0
+        self.steps = args.start_steps
         self.loss_list = []
         self.max_vocab = model_param["max_vocab"]
 
@@ -58,7 +58,7 @@ class BertTrainer:
 
                 valid_loss = self.loss_fn(mlm.view(-1, self.max_vocab), mask_token.view(-1))
 
-                valid_loss_list.append(valid_loss)
+                valid_loss_list.append(valid_loss.item())
 
         valid_loss_avr = float(sum(valid_loss_list) / len(valid_loss))
 
@@ -82,7 +82,7 @@ class BertTrainer:
 
                 test_loss = self.loss_fn(mlm.view(-1, self.max_vocab), mask_token.view(-1))
 
-                test_loss_list.append(test_loss)
+                test_loss_list.append(test_loss.item())
 
         test_loss_avr = float(sum(test_loss_list) / len(test_loss))
 
@@ -105,7 +105,7 @@ class BertTrainer:
                 # loss
                 mlm_loss = self.loss_fn(mlm.view(-1, self.max_vocab), mask_token.view(-1))
 
-                total_loss += mlm_loss
+                total_loss += mlm_loss.item()
 
                 # zero_grad
                 self.optimizer.zero_grad()

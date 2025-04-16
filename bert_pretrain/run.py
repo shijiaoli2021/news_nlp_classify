@@ -42,7 +42,8 @@ if __name__ == '__main__':
     parser.add_argument("--eps", type=float, default=1e-5)
     parser.add_argument("--train_split", type=float, default=0.8)
     parser.add_argument("--val_split", type=float, default=0.1)
-
+    parser.add_argument("--model_on_path", type=str, default="")
+    parser.add_argument("--start_steps", type=str, default=0)
 
 
     # random seed
@@ -66,8 +67,17 @@ if __name__ == '__main__':
         "num_layers": bert_config.num_layers
     }
 
-    # model
-    model = bert_model.Bert(**model_param).to(device)
+    if args.model_on_path == "":
+        # model
+        model = bert_model.Bert(**model_param).to(device)
+
+    else:
+        # load model
+        checkpoint = torch.load(args.model_on_path)
+        model_param = checkpoint["model_param"]
+        model = bert_model.Bert(**model_param).to(device)
+        model.load_state_dict(checkpoint["model_state_dict"])
+
 
     # vocab
     vocab = Vocab()
