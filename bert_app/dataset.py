@@ -22,13 +22,13 @@ class DataThread(Thread):
         return self.res
 
 
-def preprocess_range_text(data, vocab, start_idx, end_idx, thread_idx):
+def preprocess_range_text(data, vocab, start_idx, end_idx, thread_idx, input_index, label_index):
     input_data = []
     input_label = []
     with tqdm(range(start_idx, end_idx), desc=f"thread:{thread_idx}") as tq:
         for idx in tq:
             # require data and label
-            text, label = data['text'][idx], int(data['label'][idx])
+            text, label = data[input_index][idx], int(data[label_index][idx])
 
             # split
             word_list = text.split()
@@ -48,9 +48,11 @@ def preprocess_range_text(data, vocab, start_idx, end_idx, thread_idx):
     return input_data, input_label
 
 class BertAppDataset(Dataset):
-    def __init__(self, text_data, vocab:Vocab):
+    def __init__(self, text_data, vocab:Vocab, input_index:str="text", label_index:str="label"):
         super(BertAppDataset, self).__init__()
         self.data = text_data
+        self.input_index = input_index
+        self.label_index = label_index
         self.vocab = vocab
         self.input_data = None
         self.input_label = None
@@ -66,7 +68,8 @@ class BertAppDataset(Dataset):
         for i in range(THREAD_NUM):
             start_idx = i * per_size
             end_idx = min((i+1) * per_size, len(self.data))
-            thread_list.append(DataThread(preprocess_range_text, fn_args=(self.data, self.vocab, start_idx, end_idx, i)))
+            thread_list.append(DataThread(preprocess_range_text,
+                                          fn_args=(self.data, self.vocab, start_idx, end_idx, i, self.input_index, self.label_index)))
 
         # start thread
         [thread.start() for thread in thread_list]

@@ -44,5 +44,5 @@ if TRAIN:
 if TEST:
     clf = fasttext.load_model('fasttext'+str(0)+'.bin')
     test_pr = [clf.predict(x)[0][0].split('__')[-1] for x in X_test]
-    utils.out(test_pr, path='./fasttext_pre_res.csv')
+    utils.rank_out(test_pr, path='./fasttext_pre_res.csv')
     #test_pred = np.column_stack((test_pred, test_pred_))  # 将矩阵按列合并

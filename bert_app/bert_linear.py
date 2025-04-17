@@ -3,7 +3,7 @@ import torch.nn as nn
 
 class BertLinear(nn.Module):
 
-    def __init__(self, bert_model, embed_dim, classify_num, dropout = 0.1):
+    def __init__(self, bert_model, embed_dim, classify_num, dropout = 0.1, **kwargs):
         super(BertLinear, self).__init__()
         self.bert_model = bert_model
         self.dropout = nn.Dropout(dropout)

@@ -130,7 +130,7 @@ class Trainer:
                     pre_list[idx[i], pre_cash[i]] += 1
         pre_for_save = np.argmax(pre_list, axis=1).astype(str).tolist()
 
-        utils.out(pre_for_save, self.model_save_path + "res.csv")
+        utils.rank_out(pre_for_save, self.model_save_path + "res.csv")
 
     def print_fn(self):
         pass

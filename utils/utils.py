@@ -15,7 +15,7 @@ def text2vec(data):
         data_X[i] = np.array(word_list)
     return data_X, data_Y
 
-def out(res, path="./res.csv"):
+def rank_out(res, path="./res.csv"):
     df = pd.DataFrame(res, columns=['label'])
     df.to_csv(path, index=False)
 

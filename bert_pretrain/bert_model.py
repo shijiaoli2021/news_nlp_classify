@@ -150,7 +150,7 @@ class Encoder(nn.Module):
 
 
 class Bert(nn.Module):
-    def __init__(self, max_vocab, max_len, num_layers, embed_dim, num_heads, d_ff, p_dropout, device):
+    def __init__(self, max_vocab, max_len, num_layers, embed_dim, num_heads, d_ff, p_dropout, device, **kwargs):
         super(Bert, self).__init__()
         self.embedding = Embedding(
             vocab_size=max_vocab,

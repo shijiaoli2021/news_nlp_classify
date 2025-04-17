@@ -4,6 +4,7 @@ from textcnn import *
 from deeplearning.dataloader.dataloader import *
 from deeplearning.trainer.trainer import Trainer
 from vocab.vocab import *
+from data_preprocess.data_preprocess import *
 
 TRAIN_PATH = "../../../news/train_set.csv"
 TEST_PATH = "../../../news/test_a.csv"

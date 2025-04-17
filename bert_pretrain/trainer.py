@@ -35,8 +35,6 @@ class BertTrainer:
         # test:
         self.test()
 
-        # save_model
-
 
 
     def valid(self):
