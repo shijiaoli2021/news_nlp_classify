@@ -10,18 +10,13 @@ class BertLinear(nn.Module):
         self.fc = nn.Linear(embed_dim, classify_num)
 
 
-    def bert_pr(self, x):
-
-        pool_out, mlm = self.bert_model(x)
-        return pool_out
-
 
     def forward(self, x):
 
         # x(batch_size, seq_len)
 
         # bert model (batch_size, seq_len) -> (batch_size, embed_dim)
-        pool_out = self.bert_pr(x)
+        pool_out = self.bert_model(x)
 
         #dropout
         pool_out = self.dropout(pool_out)

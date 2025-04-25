@@ -8,8 +8,8 @@ from tqdm import tqdm
 from bert_linear import BertLinear
 from bert_pretrain.bert_model import Bert
 
-MODEL_SAVE_PATH = ""
-RANK_OUT_PATH = ""
+MODEL_SAVE_PATH = "./checkpoints/checkpoint1/"
+RANK_OUT_PATH = "./checkpoints/checkpoint1/"
 
 
 class Trainer(AbstractTrainer):
@@ -52,7 +52,7 @@ class Trainer(AbstractTrainer):
 
     def valid_preprocess(self, epoch):
         if epoch % self.args.valid_interval == 0:
-            self.valid()
+            self.valid(epoch)
 
     def save_model_for_valid(self, val_loss, epoch):
         self._save_preprocess(val_loss, epoch)
@@ -92,7 +92,7 @@ class Trainer(AbstractTrainer):
         with tqdm(self.rank_loader) as tq:
             for batch in tq:
                 # acquire input for model
-                x, _ = self.parse_out(batch)
+                x, _ = self.parse_input(batch)
 
                 # model -> (batch_size, classify_num)
                 pre = model(x)

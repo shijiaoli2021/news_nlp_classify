@@ -42,7 +42,7 @@ class AbstractTrainer(object):
 
         print_fn("train", 0)
 
-        for epoch in self.args.epochs:
+        for epoch in range(self.args.epochs):
             self._train_one_epoch(epoch)
             self.valid_preprocess(epoch)
         print_fn("train", 1)
@@ -52,7 +52,7 @@ class AbstractTrainer(object):
     def valid_preprocess(self, epoch):
         pass
 
-    def valid(self):
+    def valid(self, epoch):
         self.model.eval()
         print_fn("val", 0)
         loss_list = []
@@ -81,6 +81,8 @@ class AbstractTrainer(object):
         avr_eval = sum(eval_list) / len(eval_list)
         avr_loss = sum(loss_list) / len(loss_list)
         print_fn(f"valid eval:{avr_eval},valid loss:{avr_loss:.4f}", 1)
+        # save for valid
+        self.save_model_for_valid(val_loss=avr_eval, epoch=epoch)
 
     def test(self):
         model = self.load_best_model()
@@ -146,7 +148,12 @@ class AbstractTrainer(object):
                 # step
                 self.optimizer.step()
 
+                # update steps
+                self.steps += 1
+
         self.total_loss_list.append(total_loss)
+        # save for train
+        self.save_model_for_train(epoch)
 
     def parse_input(self, data)->(torch.Tensor, torch.Tensor):
         return data

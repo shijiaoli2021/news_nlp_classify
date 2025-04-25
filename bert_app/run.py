@@ -22,8 +22,8 @@ model_param = {
 def build_dataloader(data_path, vocab, args):
     data = pd.read_csv(data_path, sep="\t")
     length = len(data)
-    train_size = args.train_split * length
-    val_size = args.val_split * length
+    train_size = int(args.train_split * length)
+    val_size = int(args.val_split * length)
     return (
         build_one_dataloader(data[:train_size], vocab, args.batch_size),
         build_one_dataloader(data[train_size:train_size+val_size], vocab, args.batch_size, shuffle=False),
@@ -31,7 +31,8 @@ def build_dataloader(data_path, vocab, args):
 
 
 def build_rank_dataloader(data_path, text_vocab, batch_size):
-    rank_data = pd.read_csv(data_path, sep="\t", index_col="label")
+    rank_data = pd.read_csv(data_path, sep="\t", index_col=True)
+    rank_data.rename(columns={"Index":"label"}, inplace=True)
     return build_one_dataloader(rank_data, text_vocab, batch_size, label_index="label", shuffle=False)
 
 def build_one_dataloader(data, text_vocab, batch_size, input_index="text", label_index="label", shuffle=True):
@@ -45,6 +46,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--mode", type=str, choices=["train", "test", "rank out"])
     parser.add_argument("--batch_size", type=int, default=6)
+    parser.add_argument("--classify_num", type=int, default=14)
     parser.add_argument("--epochs", type=int, default=30)
     parser.add_argument("--valid_interval", type=int, default=1)
     parser.add_argument("--lr", type=float, default=1e-5)
@@ -54,7 +56,6 @@ if __name__ == '__main__':
     parser.add_argument("--model_on_path", type=str, default="")
     parser.add_argument("--start_steps", type=int, default=0)
     parser.add_argument("--save_best_num", type=int, default=3)
-    parser.add_argument("--valid_interval", type=int, default=2)
     parser.add_argument("--test_after_train", type=bool, default=True)
     args = parser.parse_args()
 
@@ -68,7 +69,7 @@ if __name__ == '__main__':
 
     # prediction model
     model = BertLinear(bert_model, **model_param)
-    model_param["pretrained_param"] = pretrained_model["model_param"]
+    model_param["pretrained_param"] = pretrained_model_checkpoint["model_param"]
 
     # vocab
     vocab = count_vocab.Vocab()

@@ -1,8 +1,8 @@
 from bert_pretrain.dataset import padding, seg_text
 import torch
 from torch.utils.data.dataloader import Dataset
-from count_vocab import Vocab
-import bert_config
+from bert_pretrain.count_vocab import Vocab
+import bert_pretrain.bert_config as bert_config
 from tqdm import *
 from threading import Thread
 
@@ -25,10 +25,10 @@ class DataThread(Thread):
 def preprocess_range_text(data, vocab, start_idx, end_idx, thread_idx, input_index, label_index):
     input_data = []
     input_label = []
-    with tqdm(range(start_idx, end_idx), desc=f"thread:{thread_idx}") as tq:
-        for idx in tq:
+    with tqdm(data[start_idx: end_idx].itertuples(), total=end_idx-start_idx, desc=f"thread:{thread_idx}") as tq:
+        for item in tq:
             # require data and label
-            text, label = data[input_index][idx], int(data[label_index][idx])
+            text, label = getattr(item, input_index), int(getattr(item, label_index))
 
             # split
             word_list = text.split()
@@ -56,6 +56,7 @@ class BertAppDataset(Dataset):
         self.vocab = vocab
         self.input_data = None
         self.input_label = None
+        self.preprocess_data()
 
     def preprocess_data(self):
         self.input_data = []
