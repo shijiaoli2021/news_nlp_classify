@@ -3,7 +3,7 @@ from tqdm import *
 import os
 
 
-MODEL_SAVE_PATH = "./checkpoints/checkpoint1"
+MODEL_SAVE_PATH = ""
 
 
 class BertTrainer:
@@ -35,6 +35,8 @@ class BertTrainer:
         # test:
         self.test()
 
+        # save_model
+
 
 
     def valid(self):
@@ -58,7 +60,7 @@ class BertTrainer:
 
                 valid_loss_list.append(valid_loss.item())
 
-        valid_loss_avr = float(sum(valid_loss_list) / len(valid_loss))
+        valid_loss_avr = float(sum(valid_loss_list) / len(valid_loss_list))
 
         print(f"validation over, average loss:{valid_loss_avr:.4f}")
 
@@ -82,7 +84,7 @@ class BertTrainer:
 
                 test_loss_list.append(test_loss.item())
 
-        test_loss_avr = float(sum(test_loss_list) / len(test_loss))
+        test_loss_avr = float(sum(test_loss_list) / len(test_loss_list))
 
         print(f"test over, average loss:{test_loss_avr:.4f}")
 
