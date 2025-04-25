@@ -144,8 +144,8 @@ class Trainer(AbstractTrainer):
 
         return model
 
-    def before_train(self):
-        self.valid(0)
+    # def before_train(self):
+    #     self.valid(0)
 
 
 

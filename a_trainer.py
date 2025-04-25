@@ -151,9 +151,10 @@ class AbstractTrainer(object):
                 # update steps
                 self.steps += 1
 
+                # save for train
+                self.save_model_for_train(epoch)
+
         self.total_loss_list.append(total_loss)
-        # save for train
-        self.save_model_for_train(epoch)
 
     def parse_input(self, data)->(torch.Tensor, torch.Tensor):
         return data
