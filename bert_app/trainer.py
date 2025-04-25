@@ -57,6 +57,14 @@ class Trainer(AbstractTrainer):
     def save_model_for_valid(self, val_loss, epoch):
         self._save_preprocess(val_loss, epoch)
 
+    def save_model_for_train(self, epoch):
+        if self.steps % self.args.save_steps_interval == 0:
+            print(f"the model has trained {self.steps} steps, saving...")
+            save_name = f"{type(self.model).__name__}epoch{epoch}"
+            torch.save({"model_state_dict": self.model.state_dict(), "model_param": self.model_param},
+                       MODEL_SAVE_PATH + save_name + f"_{self.steps}" + ".pth")
+            print("save model successfully...")
+
 
     def _save_preprocess(self, f1_score, epoch):
         if len(self.save_dict) < self.save_best_num:
@@ -135,6 +143,9 @@ class Trainer(AbstractTrainer):
         print(f"loading the best model successfully, eval score:{self.save_dict[max_score_model_path]:.4f}")
 
         return model
+
+    def before_train(self):
+        self.valid(0)
 
 
 

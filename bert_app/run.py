@@ -57,6 +57,8 @@ if __name__ == '__main__':
     parser.add_argument("--start_steps", type=int, default=0)
     parser.add_argument("--save_best_num", type=int, default=3)
     parser.add_argument("--test_after_train", type=bool, default=True)
+    parser.add_argument("--save_steps_interval", type=int, default=10000)
+
     args = parser.parse_args()
 
     # device
@@ -83,7 +85,7 @@ if __name__ == '__main__':
     loss_fn = torch.nn.CrossEntropyLoss()
 
     # eval_fn
-    eval_fn = MulticlassF1Score(num_classes=args.classify_num, average="macro")
+    eval_fn = MulticlassF1Score(num_classes=args.classify_num, average="macro").to(device)
 
     # dataloader
     train_loader, val_loader, test_loader = build_dataloader(TRAIN_PATH, vocab, args)

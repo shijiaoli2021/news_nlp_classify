@@ -1,16 +1,18 @@
-# coding=gb2312
+# coding=utf-8
 import fasttext
 import numpy as np
 import pandas as pd 
 from sklearn.metrics import f1_score, classification_report
 from sklearn.model_selection import StratifiedKFold
-from sklearn.preprocessing import normalize 
-import utils.utils as utils
+from sklearn.preprocessing import normalize
 
-SPLIT = 0.8
+import utils.utils
+from utils import *
+
+SPLIT = 0.9
 TRAIN = True
 TEST = True
-model = fasttext.train_supervised()
+
 data = pd.read_csv('./news/train_set.csv', sep='\t')
 split_size =int( data.shape[0] * SPLIT)
 train_df = data[:split_size]
@@ -24,25 +26,24 @@ X_train = train_df['text']
 y_train = train_df['label']
 X_test = test_df['text']
 X_valid = valid_df['text']
-KF = StratifiedKFold(n_splits=5,random_state=666,shuffle=True)
 if TRAIN:
-    train_df[['text','label_ft']].to_csv('fasttext_train_df.csv', header=None, index=False, sep='\t') #ÀûÓÃkfold½øÐÐÊý¾ÝµÄ»®·Ö
-    # Ä£ÐÍ¹¹½¨
-    model = fasttext.train_supervised('fasttext_train_df.csv', lr=0.1, epoch=27, wordNgrams=5, 
+    train_df[['text','label_ft']].to_csv('fasttext_train_df.csv', header=None, index=False, sep='\t')
+    # Ä£ï¿½Í¹ï¿½ï¿½ï¿½
+    model = fasttext.train_supervised('fasttext_train_df.csv', lr=0.1, epoch=30, wordNgrams=5,
                                       verbose=2, minCount=1, loss='hs')
-    model.save_model('fasttext'+str(0)+'.bin')
-    # Ä£ÐÍÔ¤²â
-    clf = fasttext.load_model('fasttext'+str(0)+'.bin')
+    model.save_model('fasttext'+str(1)+'.bin')
+    # Ä£ï¿½ï¿½Ô¤ï¿½ï¿½
+    clf = fasttext.load_model('fasttext'+str(1)+'.bin')
     ##val_pred = [int(model.predict(x)[0][0].split('__')[-1]) for x in X_train.iloc[valid_index]]
-    ##print('Fasttext×¼È·ÂÊÎª£º',f1_score(list(y_train.iloc[valid_index]), val_pred, average='macro'))
-    ##print(classification_report(list(y_train.iloc[valid_index]),val_pred,digits=4,target_names = ['¿Æ¼¼', '¹ÉÆ±', 'ÌåÓý', 'ÓéÀÖ', 'Ê±Õþ', 'Éç»á', '½ÌÓý',  '²Æ¾­','¼Ò¾Ó',  'ÓÎÏ·',  '·¿²ú',  'Ê±ÉÐ',  '²ÊÆ±','ÐÇ×ù']))
-    # ±£´æ²âÊÔ¼¯Ô¤²â½á¹û
+    ##print('Fasttext×¼È·ï¿½ï¿½Îªï¿½ï¿½',f1_score(list(y_train.iloc[valid_index]), val_pred, average='macro'))
+    ##print(classification_report(list(y_train.iloc[valid_index]),val_pred,digits=4,target_names = ['ï¿½Æ¼ï¿½', 'ï¿½ï¿½Æ±', 'ï¿½ï¿½ï¿½ï¿½', 'ï¿½ï¿½ï¿½ï¿½', 'Ê±ï¿½ï¿½', 'ï¿½ï¿½ï¿½', 'ï¿½ï¿½ï¿½ï¿½',  'ï¿½Æ¾ï¿½','ï¿½Ò¾ï¿½',  'ï¿½ï¿½Ï·',  'ï¿½ï¿½ï¿½ï¿½',  'Ê±ï¿½ï¿½',  'ï¿½ï¿½Æ±','ï¿½ï¿½ï¿½ï¿½']))
+    # é¢„æµ‹
     td_pred = [int(clf.predict(x)[0][0].split('__')[-1]) for x in X_valid]
     print('f1:',f1_score(valid_df['label'].values, td_pred, average='macro'))
-    print(classification_report(valid_df['label'].values,td_pred,digits=4,target_names = ['¿Æ¼¼', '¹ÉÆ±', 'ÌåÓý', 'ÓéÀÖ', 'Ê±Õþ', 'Éç»á', '½ÌÓý',  '²Æ¾­','>    ¼Ò¾Ó',  'ÓÎÏ·',  '·¿²ú',  'Ê±ÉÐ',  '²ÊÆ±','ÐÇ×ù']))
+    print(classification_report(valid_df['label'].values,td_pred,digits=4,target_names = ['ï¿½Æ¼ï¿½', 'ï¿½ï¿½Æ±', 'ï¿½ï¿½ï¿½ï¿½', 'ï¿½ï¿½ï¿½ï¿½', 'Ê±ï¿½ï¿½', 'ï¿½ï¿½ï¿½', 'ï¿½ï¿½ï¿½ï¿½',  'ï¿½Æ¾ï¿½','>    ï¿½Ò¾ï¿½',  'ï¿½ï¿½Ï·',  'ï¿½ï¿½ï¿½ï¿½',  'Ê±ï¿½ï¿½',  'ï¿½ï¿½Æ±','ï¿½ï¿½ï¿½ï¿½']))
 
 if TEST:
-    clf = fasttext.load_model('fasttext'+str(0)+'.bin')
+    clf = fasttext.load_model('fasttext'+str(1)+'.bin')
     test_pr = [clf.predict(x)[0][0].split('__')[-1] for x in X_test]
-    utils.rank_out(test_pr, path='./fasttext_pre_res.csv')
-    #test_pred = np.column_stack((test_pred, test_pred_))  # ½«¾ØÕó°´ÁÐºÏ²¢
+    utils.utils.rank_out(test_pr, path='./fasttext_pre_res.csv')
+    #test_pred = np.column_stack((test_pred, test_pred_))  # ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ÐºÏ²ï¿½
