@@ -64,14 +64,26 @@ if __name__ == '__main__':
     # device
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    # pretrained model
-    pretrained_model_checkpoint = torch.load(pretrained_model_path)
-    pretrained_model = bert_model.Bert(**pretrained_model_checkpoint['model_param'])
-    pretrained_model.load_state_dict(pretrained_model_checkpoint['model_state_dict'])
+    if args.model_on_path == "" or args.model_on_path is None:
+        # pretrained model
+        pretrained_model_checkpoint = torch.load(pretrained_model_path)
+        pretrained_model = bert_model.Bert(**pretrained_model_checkpoint['model_param'])
+        pretrained_model.load_state_dict(pretrained_model_checkpoint['model_state_dict'])
 
-    # prediction model
-    model = BertLinear(bert_model, **model_param)
-    model_param["pretrained_param"] = pretrained_model_checkpoint["model_param"]
+        # prediction model
+        model = BertLinear(pretrained_model, **model_param).to(device)
+        model_param["pretrained_param"] = pretrained_model_checkpoint["model_param"]
+
+    else:
+        checkpoint = torch.load(args.model_on_path)
+        model_param = checkpoint["model_param"]
+        # pretrained model
+        pretrained_model = bert_model.Bert(**model_param["pretrained_param"])
+        # prediction model
+        model = BertLinear(pretrained_model, **model_param)
+        model.load_state_dict(checkpoint["model_state_dict"])
+        model = model.to(device)
+
 
     # vocab
     vocab = count_vocab.Vocab()

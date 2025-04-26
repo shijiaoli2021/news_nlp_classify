@@ -1,6 +1,4 @@
 import torch
-from torch.utils.checkpoint import checkpoint
-
 from a_trainer import AbstractTrainer
 import os
 import utils.utils as utils
@@ -128,7 +126,7 @@ class Trainer(AbstractTrainer):
         max_score_model_path = max(self.save_dict, key=self.save_dict.get)
 
         # load best model
-        model_checkpoint = torch.load(MODEL_SAVE_PATH + max_score_model_path + "pth")
+        model_checkpoint = torch.load(MODEL_SAVE_PATH + max_score_model_path + ".pth")
 
         # model param
         model_param = model_checkpoint["model_param"]
@@ -138,7 +136,7 @@ class Trainer(AbstractTrainer):
 
         # load model
         model = BertLinear(bert_model=pretrain_model, **model_param)
-        model.load_state_dict(checkpoint["model_state_dict"])
+        model.load_state_dict(model_checkpoint["model_state_dict"])
 
         print(f"loading the best model successfully, eval score:{self.save_dict[max_score_model_path]:.4f}")
 
