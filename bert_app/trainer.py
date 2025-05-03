@@ -6,8 +6,8 @@ from tqdm import tqdm
 from bert_linear import BertLinear
 from bert_pretrain.bert_model import Bert
 
-MODEL_SAVE_PATH = "./checkpoints/checkpoint1/"
-RANK_OUT_PATH = "./checkpoints/checkpoint1/"
+MODEL_SAVE_PATH = "./checkpoints/checkpoint2/"
+RANK_OUT_PATH = "./checkpoints/checkpoint2/"
 
 
 class Trainer(AbstractTrainer):
@@ -61,6 +61,9 @@ class Trainer(AbstractTrainer):
             save_name = f"{type(self.model).__name__}epoch{epoch}"
             torch.save({"model_state_dict": self.model.state_dict(), "model_param": self.model_param},
                        MODEL_SAVE_PATH + save_name + f"_{self.steps}" + ".pth")
+            # test
+            self.generate_rank_file()
+            self.model.train()
             print("save model successfully...")
 
 
@@ -92,6 +95,7 @@ class Trainer(AbstractTrainer):
         if self.rank_loader is None:
             return
         model = self.load_best_model()
+        model.eval()
         # run model for rank
         print("run model to generate rank files begin...")
         pre_list = []
@@ -109,7 +113,7 @@ class Trainer(AbstractTrainer):
                 pre_list += [pre_idx.item() for pre_idx in pre_cash_idx]
 
         # generate rank files
-        utils.rank_out(pre_list, RANK_OUT_PATH)
+        utils.rank_out(pre_list, RANK_OUT_PATH + "res" + "_" + str(self.steps) + ".csv")
 
 
     def after_train(self):
@@ -140,11 +144,11 @@ class Trainer(AbstractTrainer):
 
         print(f"loading the best model successfully, eval score:{self.save_dict[max_score_model_path]:.4f}")
 
-        return model
+        return model.to(self.device)
 
     # def before_train(self):
+    #     print("test val ...")
     #     self.valid(0)
-
 
 
 

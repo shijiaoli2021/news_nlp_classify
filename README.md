@@ -18,16 +18,12 @@
 
 采用TF-TDF作为特征工程，使用主流分类器进行拟合，例如：岭回归分类器、支持向量机、决策树、随机森林等，采用岭回归分类f1值能达到0.9-0.92左右。
 
-
-
 ```
 # run code
 cd ./machine_learning/tfidf
 
 python tf_idf_classify.py
 ```
-
-
 
 ### 4.2 fasttext
 
@@ -59,15 +55,11 @@ python run.py --mode train
 python run.py --mode test
 ```
 
-
-
 ### 4.4 textcnn + attention
 
 加上注意力机制两者效果相差不大，没啥区别，有时候甚至原始的textcnn效果更好，本文在textcnn中新写了textcnnplus来实现，训练代码时只需要替换对应run.py中import的模型即可。
 
 ### 4.5 textcnn + RNN
-
-
 
 ## 4.6 预训练模型+微调
 
