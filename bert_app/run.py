@@ -8,9 +8,10 @@ from torchmetrics.classification import MulticlassF1Score
 from bert_app.dataset import BertAppDataset
 from torch.utils.data.dataloader import DataLoader
 import pandas as pd
+import lora_util
+import lora_config
 
 pretrained_model_path = ""
-trained_model_path =""
 TRAIN_PATH = ""
 TEST_PATH = ""
 
@@ -58,6 +59,8 @@ if __name__ == '__main__':
     parser.add_argument("--save_best_num", type=int, default=3)
     parser.add_argument("--test_after_train", type=bool, default=True)
     parser.add_argument("--save_steps_interval", type=int, default=10000)
+    parser.add_argument("--fine_tuning_for_lora", type=bool, default=False)
+    parser.add_argument("--pretrained_model_path", type=str, default="")
 
     args = parser.parse_args()
 
@@ -74,14 +77,37 @@ if __name__ == '__main__':
         model = BertLinear(pretrained_model, **model_param).to(device)
         model_param["pretrained_param"] = pretrained_model_checkpoint["model_param"]
 
+        # adapter for model
+        if args.fine_tuning_for_lora:
+            lora_util.to_lora_adapter(model, lora_config.lora_adapter_info)
+
     else:
         checkpoint = torch.load(args.model_on_path)
         model_param = checkpoint["model_param"]
-        # pretrained model
-        pretrained_model = bert_model.Bert(**model_param["pretrained_param"])
-        # prediction model
-        model = BertLinear(pretrained_model, **model_param)
-        model.load_state_dict(checkpoint["model_state_dict"])
+        if not args.fine_tuning_for_lora:
+            # prediction model
+            pretrained_model = bert_model.Bert(**model_param["pretrained_param"])
+
+            # model
+            model = BertLinear(pretrained_model, **model_param)
+            model.load_state_dict(checkpoint["model_state_dict"])
+        else:
+            # pretrained model
+            pretrained_model_checkpoint = torch.load(pretrained_model_path)
+            pretrained_model = bert_model.Bert(**pretrained_model_checkpoint['model_param'])
+
+            # model
+            model = BertLinear(pretrained_model, **model_param)
+
+            # lora adapter
+            lora_util.to_lora_adapter(model, lora_config.lora_adapter_info)
+
+            # lora_state_dict
+            model.load_state_dict(checkpoint["model_state_dict"])
+
+            # pretrain_model_state_dic
+            model.load_state_dict(pretrained_model_checkpoint['model_state_dict'])
+
         model = model.to(device)
 
 
@@ -90,8 +116,8 @@ if __name__ == '__main__':
     vocab.load_data2vocab(TRAIN_PATH)
     vocab.load_data2vocab(TEST_PATH)
 
-    # optimizer
-    optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
+    # optimizer: optimize for only trainable parameters
+    optimizer = torch.optim.Adam(filter(lambda p: p.requires_grad, model.parameters()), lr=args.lr)
 
     # loss_fn
     loss_fn = torch.nn.CrossEntropyLoss()

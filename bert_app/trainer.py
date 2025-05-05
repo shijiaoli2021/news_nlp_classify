@@ -6,6 +6,7 @@ from tqdm import tqdm
 from bert_linear import BertLinear
 from bert_pretrain.bert_model import Bert
 import numpy as np
+import lora_util
 
 MODEL_SAVE_PATH = "./checkpoints/checkpoint2/"
 RANK_OUT_PATH = "./checkpoints/checkpoint2/"
@@ -41,11 +42,13 @@ class Trainer(AbstractTrainer):
         self.save_best_num = args.save_best_num
         self.rank_loader = rank_loader
         self.stacking_model_name = None
+        # fine_tuning_for_lora
+        if self.args.fine_tuning_for_lora:
+            lora_util.mark_only_lora_as_trainable(self.model, bias='all')
 
     def parse_input(self, data) ->(torch.Tensor, torch.Tensor):
         x, y = [item.to(self.device) for item in data]
         return x, y
-
 
     def parse_out(self, data) -> torch.Tensor:
         return data
@@ -68,12 +71,16 @@ class Trainer(AbstractTrainer):
             self.model.train()
             print("save model successfully...")
 
+    def _model_state_dict(self):
+        if not self.args.fine_tuning_for_lora:
+            return self.model.state_dict()
+        return lora_util.lora_state_dict(self.model, bias='all')
 
     def _save_preprocess(self, f1_score, epoch):
         if len(self.save_dict) < self.save_best_num:
             save_name = f"{type(self.model).__name__}epoch{epoch}"
             self.save_dict[save_name] = f1_score
-            torch.save({"model_state_dict": self.model.state_dict(), "model_param": self.model_param},
+            torch.save({"model_state_dict": self._model_state_dict(), "model_param": self.model_param, "pretrained_model_path": self.args.pretrained_model_path},
                        MODEL_SAVE_PATH + save_name + ".pth")
             return
 
@@ -84,7 +91,7 @@ class Trainer(AbstractTrainer):
         self.save_dict[save_name] = f1_score
 
         # 保存较好的模型训练参数和初始化参数
-        torch.save({"model_state_dict": self.model.state_dict(), "model_param": self.model_param},
+        torch.save({"model_state_dict": self._model_state_dict(), "model_param": self.model_param, "pretrained_model_path":self.args.pretrained_model_path},
                    MODEL_SAVE_PATH + save_name + ".pth")
 
         # 获取当前排在最后的模型保存名称，并在指定路径中删除
@@ -137,9 +144,12 @@ class Trainer(AbstractTrainer):
         # model param
         model_param = model_checkpoint["model_param"]
 
-        # pretrained_model
-        pretrain_model = Bert(**model_param["pretrained_param"])
 
+        if self.args.fine_tuning_for_lora:
+            pretrain_model = self.model.bert_model
+        else:
+            # pretrained_model
+            pretrain_model = Bert(**model_param["pretrained_param"])
         # load model
         model = BertLinear(bert_model=pretrain_model, **model_param)
         model.load_state_dict(model_checkpoint["model_state_dict"])
