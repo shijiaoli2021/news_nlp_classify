@@ -44,7 +44,7 @@ def build_one_dataloader(data, text_vocab, batch_size, input_index="text", label
 if __name__ == '__main__':
     # argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument("--mode", type=str, choices=["train", "test", "rank out"])
+    parser.add_argument("--mode", type=str, choices=["train", "test", "rank out", "app_stacking"])
     parser.add_argument("--batch_size", type=int, default=6)
     parser.add_argument("--classify_num", type=int, default=14)
     parser.add_argument("--epochs", type=int, default=30)
@@ -118,11 +118,25 @@ if __name__ == '__main__':
         args
     )
 
-    # train the model
-    trainer.train()
+    if args.mode == 'train':
+        # train the model
+        trainer.train()
 
-    # train over, rank out
-    trainer.generate_rank_file()
+        # train over, rank out
+        trainer.generate_rank_file()
+
+    elif args.mode == 'test':
+        # test the model
+        trainer.test()
+
+    elif args.mode == 'rank_out':
+        # rank out
+        trainer.generate_rank_file()
+
+    elif args.mode == 'app_stacking':
+        trainer.set_stacking_model_name("RandomForestClassifier")
+        trainer.stacking_model()
+
 
 
 

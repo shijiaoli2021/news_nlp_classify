@@ -9,7 +9,8 @@ class BertLinear(nn.Module):
         self.dropout = nn.Dropout(dropout)
         self.fc = nn.Linear(embed_dim, classify_num)
 
-
+    def bert_out(self, x):
+        return self.bert_model(x)
 
     def forward(self, x):
 

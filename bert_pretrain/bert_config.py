@@ -5,14 +5,14 @@ max_len = 3000
 max_vocab = 7000
 
 # mask时最大mask数量
-max_pre = 10
+max_pre = 450
 
 # k和q的维度
-embed_dim = 64
+embed_dim = 256
 d_model = 256
 d_ff = d_model * 4
 
-num_heads = 12
+num_heads = 4
 num_layers = 4
 
 num_seg = 2
