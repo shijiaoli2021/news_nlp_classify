@@ -39,7 +39,7 @@ python fasttext_tr.py
 
 ### 4.3 textcnn
 
-首先，依据拆分数量将文本进行拆分多个子文本构建单词、多词词典，对文本实现卷积操作,首先对文本进行拆分处理，存储为npz训练文件，测试时对于大于拆分长度的文本，拆分为多个相同长度的子文本投入模型得到预测结果，统计预测数量最多的为预测结果。
+首先，依据拆分数量将文本进行拆分多个子文本构建单词、多词词典，对文本实现卷积操作,首先对文本进行拆分处理，存储为npz训练文件，测试时对于大于拆分长度的文本，拆分为多个相同长度的子文本投入模型得到预测结果，统计预测数量最多的为预测结果,测试f1值在0.85-0.9。
 
 ```
 # run code
@@ -63,18 +63,41 @@ python run.py --mode test
 
 ## 4.6 预训练模型+微调
 
-目前借鉴bert训练模式，由于只需要学习文本语义，于是减少了NSP训练任务，只保留了 MLM任务。同时，对于预训练时，采取的截断文本长度为3000，由于资源有限，预训练了mini-bert（L=4， hidden_dim=256）。预训练后采用最简单的全连接进行分类任务微调。
+#### 4.6.1预训练
 
-对预训练模型以batch=4，训练共20万步，再用预训练模型进行全连接微调，作为文本分类模型。
+目前借鉴bert训练模式，由于只需要学习文本语义，于是减少了NSP训练任务，只保留了 MLM任务。同时，对于预训练时，采取的截断文本长度为3000，由于资源有限，预训练了mini-bert（L=4， hidden_dim=256）。对预训练模型以batch=4，训练共40万步。
 
 ```
-# run code
-
 #1.pretrain mini-bert just for mlm
 cd bert_pretrain
 python run.py
+```
 
-# 2.prompt classify
+#### 4.6.2 微调
+
+1.预训练后采用最简单的全连接进行分类任务微调。再用预训练模型进行全连接微调，作为文本分类模型。共训练20万步，f1值能达到0.943-0.947左右。
+
+```
+# run code
+# prompt classify
 cd bert_app
 python run.py
+```
+
+2.stacking：微调后的bert作为输入接入机器学习完成分类。
+
+```
+# run code
+# stacking
+cd bert_app
+python run.py --mode app_stacking --model_on_path ./checkpoints/checkpoint1/trained_model.pth
+```
+
+3.lora,使用lora进行模型微调，对此，构建了一套lora适配器和相关工具方法lora_util，适配原有模型，训练时只训练lora部分参数。
+
+```
+#run code 
+# lora
+cd bert_app
+python run.py --fine_tuning_for_lora True
 ```

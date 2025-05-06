@@ -171,30 +171,40 @@ class Trainer(AbstractTrainer):
             x, y = self.parse_input(data)
             x_list.append(self.model.bert_out(x).detach().cpu().numpy())
             label_list.append(y.detach().cpu().numpy())
-        return np.stack(x_list, axis=0), np.stack(label_list,axis=0)
+        return np.concatenate(x_list, axis=0), np.concatenate(label_list,axis=0)
 
     def stacking_model(self, generate_rank_file = True):
+
+        train_x, train_y = self._get_pretrain_model_stacking(self.train_loader)
+        val_x, val_y = self._get_pretrain_model_stacking(self.valid_loader)
+
         from sklearn.metrics import f1_score
         if self.stacking_model_name == 'RandomForestClassifier':
             from sklearn.ensemble import RandomForestClassifier
-            train_x, train_y = self._get_pretrain_model_stacking(self.train_loader)
-            val_x, val_y = self._get_pretrain_model_stacking(self.valid_loader)
 
             # build randomForestClassifier
             classifier = RandomForestClassifier(n_estimators=20)
+        elif self.stacking_model_name == "RidgeClassifier":
+            from sklearn.linear_model import RidgeClassifier
 
-            # fit
-            classifier.fit(train_x, train_y)
+            # build randomForestClassifier
+            classifier = RidgeClassifier()
 
-            # predict
-            pre = classifier.predict(val_x)
-            print(f1_score(val_y, pre, average='macro'))
+        else:
+            raise NotImplementedError
 
-            # generate out file
-            if generate_rank_file:
-                test_x, _ = self._get_pretrain_model_stacking(self.rank_loader)
-                pre = classifier.predict(test_x)
-                utils.rank_out(pre, RANK_OUT_PATH + "res_" + self.stacking_model_name + ".csv")
+        # fit
+        classifier.fit(train_x, train_y)
+
+        # predict
+        pre = classifier.predict(val_x)
+        print(f1_score(val_y, pre, average='macro'))
+
+        # generate out file
+        if generate_rank_file:
+            test_x, _ = self._get_pretrain_model_stacking(self.rank_loader)
+            pre = classifier.predict(test_x)
+            utils.rank_out(pre, RANK_OUT_PATH + "res_" + self.stacking_model_name + ".csv")
 
     # def before_train(self):
     #     print("test val ...")
