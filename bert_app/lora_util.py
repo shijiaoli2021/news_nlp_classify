@@ -148,8 +148,8 @@ class LoraMha(nn.Module, LoRALayer):
         # fc lora
         self.mha.fc = LoRAAdapter(mha.fc, input_dim, output_dim, r, alpha)
 
-    def forward(self, x):
-        return self.mha(x)
+    def forward(self, x, pad_mask):
+        return self.mha(x, pad_mask)
 
 
 
