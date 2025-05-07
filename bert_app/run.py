@@ -45,7 +45,7 @@ def build_one_dataloader(data, text_vocab, batch_size, input_index="text", label
 if __name__ == '__main__':
     # argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument("--mode", type=str, choices=["train", "test", "rank out", "app_stacking"])
+    parser.add_argument("--mode", type=str, choices=["train", "test", "rank out", "app_stacking"], default="train")
     parser.add_argument("--batch_size", type=int, default=6)
     parser.add_argument("--classify_num", type=int, default=14)
     parser.add_argument("--epochs", type=int, default=30)

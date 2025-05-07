@@ -101,14 +101,15 @@ class LoRAAdapter(nn.Module, LoRALayer):
         origin_out = self.model(x)
         out_shape = origin_out.shape
         if self.enable_lora is None:
-            lora = (self.alpha / self.r) *torch.mm(torch.mm(self.lora_A, x), self.lora_B)
+            lora = (self.alpha / self.r) *torch.matmul(torch.matmul(x, self.lora_A), self.lora_B)
             return origin_out + lora
         else:
             i = 0
             origin_out = origin_out.view(-1, out_shape[-1])
+            x = x.view(-1, self.input_dim)
             for k in range(len(self.enable_lora)):
                 if self.enable_lora[k]:
-                    cash = (self.alpha / self.r) * torch.mm(torch.mm(self.lora_A_list[i], x), self.lora_B_list[i])
+                    cash = (self.alpha / self.r) * torch.matmul(torch.matmul(x, self.lora_A_list[i]), self.lora_B_list[i])
                     origin_out[:, k * self.seg_dim : (k+1) * self.seg_dim] += cash
                     i += 1
             origin_out = origin_out.reshape(out_shape)
@@ -148,8 +149,8 @@ class LoraMha(nn.Module, LoRALayer):
         # fc lora
         self.mha.fc = LoRAAdapter(mha.fc, input_dim, output_dim, r, alpha)
 
-    def forward(self, x, pad_mask):
-        return self.mha(x, pad_mask)
+    def forward(self, x, attn_mask):
+        return self.mha(x, attn_mask)
 
 
 
