@@ -15,7 +15,7 @@ RANK_OUT_PATH = "./checkpoints/checkpoint2/"
 class Trainer(AbstractTrainer):
     def __init__(
             self,
-            model,
+            model:BertLinear,
             model_param,
             device,
             train_loader,
@@ -38,13 +38,14 @@ class Trainer(AbstractTrainer):
             optimizer = optimizer,
             args = args
         )
+        self.model = model
         self.save_dict = {}
         self.save_best_num = args.save_best_num
         self.rank_loader = rank_loader
         self.stacking_model_name = None
         # fine_tuning_for_lora
         if self.args.fine_tuning_for_lora:
-            lora_util.mark_only_lora_as_trainable(self.model, bias='all')
+            lora_util.mark_only_lora_as_trainable(self.model.bert_model, bias='all')
 
     def parse_input(self, data) ->(torch.Tensor, torch.Tensor):
         x, y = [item.to(self.device) for item in data]
@@ -63,8 +64,8 @@ class Trainer(AbstractTrainer):
     def save_model_for_train(self, epoch):
         if self.steps % self.args.save_steps_interval == 0:
             print(f"the model has trained {self.steps} steps, saving...")
-            save_name = f"{type(self.model).__name__}epoch{epoch}"
-            torch.save({"model_state_dict": self.model.state_dict(), "model_param": self.model_param},
+            save_name = f"{type(self.model).__name__}" + ("_lora_" if self.args.fine_tuning_for_lora else "")  + f"epoch{epoch}"
+            torch.save({"model_state_dict": self._model_state_dict(), "model_param": self.model_param},
                        MODEL_SAVE_PATH + save_name + f"_{self.steps}" + ".pth")
             # test
             self.generate_rank_file()
@@ -74,11 +75,14 @@ class Trainer(AbstractTrainer):
     def _model_state_dict(self):
         if not self.args.fine_tuning_for_lora:
             return self.model.state_dict()
-        return lora_util.lora_state_dict(self.model, bias='all')
+        state_dict =  lora_util.lora_state_dict(self.model, bias='all')
+        state_dict["fine_tuning_linear"] = self.model.fc.state_dict()
+        return state_dict
+
 
     def _save_preprocess(self, f1_score, epoch):
         if len(self.save_dict) < self.save_best_num:
-            save_name = f"{type(self.model).__name__}epoch{epoch}"
+            save_name = f"{type(self.model).__name__}" + ("_lora_" if self.args.fine_tuning_for_lora else "")  + f"epoch{epoch}"
             self.save_dict[save_name] = f1_score
             torch.save({"model_state_dict": self._model_state_dict(), "model_param": self.model_param, "pretrained_model_path": self.args.pretrained_model_path},
                        MODEL_SAVE_PATH + save_name + ".pth")
@@ -87,7 +91,7 @@ class Trainer(AbstractTrainer):
         if f1_score < min(self.save_dict.values()):
             return
 
-        save_name = f"{type(self.model).__name__}epoch{epoch}"
+        save_name = f"{type(self.model).__name__}" + ("_lora_" if self.args.fine_tuning_for_lora else "")  + f"epoch{epoch}"
         self.save_dict[save_name] = f1_score
 
         # 保存较好的模型训练参数和初始化参数

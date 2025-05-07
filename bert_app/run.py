@@ -73,13 +73,13 @@ if __name__ == '__main__':
         pretrained_model = bert_model.Bert(**pretrained_model_checkpoint['model_param'])
         pretrained_model.load_state_dict(pretrained_model_checkpoint['model_state_dict'])
 
+        # adapter for model
+        if args.fine_tuning_for_lora:
+            lora_util.to_lora_adapter(pretrained_model, lora_config.lora_adapter_info)
+
         # prediction model
         model = BertLinear(pretrained_model, **model_param).to(device)
         model_param["pretrained_param"] = pretrained_model_checkpoint["model_param"]
-
-        # adapter for model
-        if args.fine_tuning_for_lora:
-            lora_util.to_lora_adapter(model, lora_config.lora_adapter_info)
 
     else:
         checkpoint = torch.load(args.model_on_path)
