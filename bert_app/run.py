@@ -11,14 +11,16 @@ import pandas as pd
 import lora_util
 import lora_config
 
-pretrained_model_path = ""
-TRAIN_PATH = ""
-TEST_PATH = ""
+pretrained_model_path = "../bert_pretrain/checkpoints/checkpoint2/mini_bert_600000.pth"
+trained_model_path = ""
+TRAIN_PATH = "../news/train_set.csv"
+TEST_PATH = "../news/test_a.csv"
 
 model_param = {
     "embed_dim": 256,
     "classify_num": 14
 }
+
 
 def build_dataloader(data_path, vocab, args):
     data = pd.read_csv(data_path, sep="\t")
@@ -27,19 +29,19 @@ def build_dataloader(data_path, vocab, args):
     val_size = int(args.val_split * length)
     return (
         build_one_dataloader(data[:train_size], vocab, args.batch_size),
-        build_one_dataloader(data[train_size:train_size+val_size], vocab, args.batch_size, shuffle=False),
-        build_one_dataloader(data[train_size+val_size:], vocab, args.batch_size, shuffle=False))
+        build_one_dataloader(data[train_size:train_size + val_size], vocab, args.batch_size, shuffle=False),
+        build_one_dataloader(data[train_size + val_size:], vocab, args.batch_size, shuffle=False))
 
 
 def build_rank_dataloader(data_path, text_vocab, batch_size):
-    rank_data = pd.read_csv(data_path, sep="\t", index_col=True)
-    rank_data.rename(columns={"Index":"label"}, inplace=True)
+    rank_data = pd.read_csv(data_path, sep="\t")
+    rank_data['label'] = rank_data.index
     return build_one_dataloader(rank_data, text_vocab, batch_size, label_index="label", shuffle=False)
+
 
 def build_one_dataloader(data, text_vocab, batch_size, input_index="text", label_index="label", shuffle=True):
     dataset = BertAppDataset(data, text_vocab, input_index=input_index, label_index=label_index)
     return DataLoader(dataset=dataset, batch_size=batch_size, shuffle=shuffle)
-
 
 
 if __name__ == '__main__':
@@ -48,12 +50,12 @@ if __name__ == '__main__':
     parser.add_argument("--mode", type=str, choices=["train", "test", "rank out", "app_stacking"], default="train")
     parser.add_argument("--batch_size", type=int, default=6)
     parser.add_argument("--classify_num", type=int, default=14)
-    parser.add_argument("--epochs", type=int, default=30)
+    parser.add_argument("--epochs", type=int, default=10)
     parser.add_argument("--valid_interval", type=int, default=1)
-    parser.add_argument("--lr", type=float, default=1e-5)
-    parser.add_argument("--eps", type=float, default=1e-6)
-    parser.add_argument("--train_split", type=float, default=0.8)
-    parser.add_argument("--val_split", type=float, default=0.1)
+    parser.add_argument("--lr", type=float, default=1e-4)
+    parser.add_argument("--eps", type=float, default=1e-5)
+    parser.add_argument("--train_split", type=float, default=0.9)
+    parser.add_argument("--val_split", type=float, default=0.05)
     parser.add_argument("--model_on_path", type=str, default="")
     parser.add_argument("--start_steps", type=int, default=0)
     parser.add_argument("--save_best_num", type=int, default=3)
@@ -102,14 +104,18 @@ if __name__ == '__main__':
             # lora adapter
             lora_util.to_lora_adapter(model, lora_config.lora_adapter_info)
 
+            cash_state_dict = checkpoint["model_state_dict"]
+
             # lora_state_dict
-            model.load_state_dict(checkpoint["model_state_dict"])
+            model.load_state_dict(checkpoint["model_state_dict"], strict=False)
 
             # pretrain_model_state_dic
-            model.load_state_dict(pretrained_model_checkpoint['model_state_dict'])
+            model.bert_model.load_state_dict(pretrained_model_checkpoint['model_state_dict'], strict=False)
 
-        model = model.to(device)
+            # fc linear parameters
+            model.fc.load_state_dict(checkpoint["fine_tuning_module"])
 
+    model = model.to(device)
 
     # vocab
     vocab = count_vocab.Vocab()
