@@ -7,7 +7,7 @@ class BertLinear(nn.Module):
         super(BertLinear, self).__init__()
         self.bert_model = bert_model
         self.dropout = nn.Dropout(dropout)
-        self.fc = nn.Linear(embed_dim, classify_num)
+        self.fc = nn.ModuleList([nn.Linear(embed_dim, embed_dim), nn.Linear(embed_dim, classify_num)])
 
     def bert_out(self, x):
         return self.bert_model(x)
@@ -22,5 +22,7 @@ class BertLinear(nn.Module):
         #dropout
         pool_out = self.dropout(pool_out)
 
+        for layer in self.fc:
+            pool_out = layer(pool_out)
         # (batch_size, embed_dim) -> (batch_size, classify_num)
-        return self.fc(pool_out)
+        return pool_out
