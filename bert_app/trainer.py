@@ -1,3 +1,5 @@
+import typing
+
 import torch
 from a_trainer import AbstractTrainer
 import os
@@ -188,9 +190,15 @@ class Trainer(AbstractTrainer):
             label_list.append(y.detach().cpu().numpy())
         return np.concatenate(x_list, axis=0), np.concatenate(label_list, axis=0)
 
-    def stacking_model(self, generate_rank_file=True):
-        train_x, train_y = self._get_pretrain_model_stacking(self.train_loader)
-        val_x, val_y = self._get_pretrain_model_stacking(self.valid_loader)
+    def stacking_model(self, generate_rank_file=True, data_path_dict:typing.Dict=None, save_compute_path:str=None):
+        if data_path_dict is None:
+            train_x, train_y = self._get_pretrain_model_stacking(self.train_loader)
+            val_x, val_y = self._get_pretrain_model_stacking(self.valid_loader)
+        else:
+            train_data = np.load(data_path_dict["train"])
+            val_data = np.load(data_path_dict["val"])
+            train_x, train_y = train_data["train_x"], train_data["train_y"]
+            val_x, val_y = val_data["val_x"], val_data["val_y"]
 
         from sklearn.metrics import f1_score
         if self.stacking_model_name == 'RandomForestClassifier':
@@ -204,6 +212,10 @@ class Trainer(AbstractTrainer):
             # build randomForestClassifier
             classifier = RidgeClassifier()
 
+        elif self.stacking_model_name == "GBDT":
+            from sklearn.ensemble import GradientBoostingClassifier
+            classifier = GradientBoostingClassifier(n_estimators=100, learning_rate=0.1)
+
         else:
             raise NotImplementedError
 
@@ -216,9 +228,19 @@ class Trainer(AbstractTrainer):
 
         # generate out file
         if generate_rank_file:
-            test_x, _ = self._get_pretrain_model_stacking(self.rank_loader)
+            if data_path_dict is None:
+                test_x, _ = self._get_pretrain_model_stacking(self.rank_loader)
+            else:
+                test_x = np.load(data_path_dict["rank"])
             pre = classifier.predict(test_x)
             utils.rank_out(pre, RANK_OUT_PATH + "res_" + self.stacking_model_name + ".csv")
+        else:
+            test_x = None
+
+        if save_compute_path is not None:
+            np.savez(save_compute_path + "train.npz", train_x=train_x, train_y=train_y)
+            np.savez(save_compute_path + "val.npz", val_x = val_x, val_y = val_y)
+            np.savez(save_compute_path + "test.npz", data = test_x)
 
     # def before_train(self):
     #     print("test val ...")
