@@ -171,9 +171,9 @@ class Bert(nn.Module):
         self.gelu = nn.GELU()
         self.fc = nn.Linear(embed_dim, embed_dim)
 
-    def forward(self, x, masked_pos=None):
+    def forward(self, x, masked_pos=None, seq_out:bool=False):
         """
-
+        :param seq_out: bool
         :param x: (batch_size, seq_len)
         :param masked_pos: (batch_size, max_pre)
         :return: pool_out(batch_size, hidden_size),classifier(batch_size, classifier_num)
@@ -187,6 +187,9 @@ class Bert(nn.Module):
         # encoder_layers (batch_size, seq_len, embed_dim)
         for encoder in self.enc_layers:
             output = encoder(output, pad_mask)
+
+        if seq_out:
+            return output
 
         if masked_pos is None:
             return output[:, 0, :]
